@@ -1,0 +1,20 @@
+{
+  
+  "compilerOptions": {
+    "target": "ES2016",                // 设置 ECMAScript 目标版本
+    "module": "commonjs",           // 使用 commonjs 模块
+    "outDir": "./dist",             // 指定输出目录为 dist
+    "rootDir": "./src",             // 指定源文件目录为 src
+    "strict": true,                 // 启用所有严格类型检查选项
+    "esModuleInterop": true,        // 允许导出非 ES 模块
+    "skipLibCheck": true,           // 跳过库文件的类型检查
+    "forceConsistentCasingInFileNames": true // 强制文件名大小写一致
+  },
+  "include": [
+    "src/**/*"                      // 包含 src 目录下的所有文件
+  ],
+  "exclude": [
+    "node_modules",                 // 排除 node_modules 目录
+    "**/*.spec.ts"                  // 排除所有测试文件
+  ]
+}
