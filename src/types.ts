@@ -1,14 +1,5 @@
 import { z } from "zod";
 
-// command schema
-export const generateCommandSchema = z.object({
-  prompt: z.string(),
-  boturl: z.string(),
-});
-
-export const checkStatusCommandSchema = z.object({
-  task_id: z.string(),
-});
 export const commands = [
   {
     name: "generate",
@@ -27,22 +18,6 @@ export const commands = [
         required: true,
       },
     ],
-  },
-  {
-    name: "check_status",
-    description: "Checks the status of a specific task.",
-    options: [
-      {
-        type: 3, // 字符串类型
-        name: "task_id",
-        description: "The ID of the task to check.",
-        required: true,
-      },
-    ],
-  },
-  {
-    name: "list_tasks",
-    description: "Lists all active video generation tasks.",
   },
 ];
 

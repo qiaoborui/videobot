@@ -1,4 +1,5 @@
-import { default as fetch, Response } from "node-fetch";
+import fetch from "node-fetch";
+import { Response } from "node-fetch";
 import * as dotenv from "dotenv";
 import { envVarsSchema } from "./types";
 import Redis from "ioredis";
