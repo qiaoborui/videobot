@@ -11,6 +11,7 @@ import {
 import { TaskQueue, Status, Task } from "./taskQueue";
 import { redisClient } from "./utils";
 import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
 const TOKEN = getEnvVars().TOKEN;
 const CLIENT_ID = getEnvVars().CLIENT_ID;
 const taskQueue = new TaskQueue(redisClient, "discord-bot-tasks");
@@ -28,7 +29,11 @@ async function registerCommands() {
 }
 async function main() {
   registerCommands();
-
+  // check directory videos exists if not create it
+  const videosDir = "./videos";
+  if (!fs.existsSync(videosDir)) {
+    fs.mkdirSync(videosDir);
+  }
   client.on("ready", () => {});
   client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
@@ -143,16 +148,21 @@ async function processTask(task: Task) {
   if (taskMemory.includes(task.id) && task.status === Status.DONE) {
     console.log(`Task ${task.id} for user ${task.userId} is done.`);
     taskMemory.splice(taskMemory.indexOf(task.id), 1);
-    client.login(TOKEN);
-    client.users
-      .fetch(task.userId)
-      .then((user) => {
-        user.send("Your video is ready!");
-      })
-      .catch((error) => {
-        console.error("Failed to send message to user:", error);
-      });
-    client.login(TOKEN);
+    await replyToUserInChannel(
+      task.channelId,
+      task.userId,
+      "Your video is ready.",
+      `./videos/test.mp4`
+    );
+  }
+  if (taskMemory.includes(task.id) && task.status === Status.FAILED) {
+    console.log(`Task ${task.id} for user ${task.userId} failed.`);
+    taskMemory.splice(taskMemory.indexOf(task.id), 1);
+    await replyToUserInChannel(
+      task.channelId,
+      task.userId,
+      "Failed to generate video."
+    );
   }
 }
 
@@ -183,5 +193,24 @@ async function updateTaskStatus(taskId: string, status: Status) {
     await taskQueue.updateTaskStatus(taskId, status);
   } catch (error) {
     console.error(`Failed to update status for task ${taskId}:`, error);
+  }
+}
+
+async function replyToUserInChannel(
+  channelId: string,
+  userId: string,
+  message: string,
+  file?: string
+) {
+  const channel = await client.channels.fetch(channelId);
+  if (channel && channel.isTextBased()) {
+    if (file) {
+      channel.send({
+        content: `<@${userId}> ${message}`,
+        files: [file],
+      });
+    } else {
+      channel.send(`<@${userId}> ${message}`);
+    }
   }
 }

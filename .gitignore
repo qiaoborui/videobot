@@ -1,3 +1,6 @@
 .env
 node_modules
 dist
+test.mp4
+videos/
+.DS_Store
