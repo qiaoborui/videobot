@@ -52,6 +52,11 @@ const VideoInputDataSchema = z.object({
   shots: z.array(ShotSchema),
 });
 
+const OptionSchema = z.object({
+  background_music: z.string().optional(),
+  voiceModelId: z.string().optional(),
+});
+
 export const VideoInputSchema = z.object({
   videoInput: VideoInputDataSchema,
   // char name to image prompt
@@ -62,9 +67,8 @@ export const VideoInputSchema = z.object({
       prompt: z.string().optional(),
     })
   ),
-  // char name to 11labs voiceid
   voiceMap: z.record(z.string(), z.string()),
-  voiceModelId: z.string().optional(),
+  options: OptionSchema.optional(),
 });
 
 export type VideoInput = z.infer<typeof VideoInputSchema>;

@@ -6,9 +6,14 @@ import {
   promptResponseSchema,
   submitVideoTaskResponseSchema,
   checkStatusResponseSchema,
+  scriptResponseSchema,
+  ScriptResponse,
 } from "./validators";
 
-export async function fetchBotImageUrl(botUrl: string): Promise<string> {
+export async function fetchDetail(botUrl: string): Promise<{
+  thumbnailURL: string;
+  title: string;
+}> {
   if (!botUrl.startsWith("https://flowgpt.com/p/")) {
     throw new Error("Invalid bot URL");
   }
@@ -27,19 +32,24 @@ export async function fetchBotImageUrl(botUrl: string): Promise<string> {
   if (!parsedResponse.success) {
     throw new Error(parsedResponse.error.errors.join("\n"));
   }
-  return parsedResponse.data.prompt.thumbnailURL;
+  return parsedResponse.data.prompt;
 }
 
 export async function generateScriptGenerationTask(
-  prompt: string
+  PlotPrompt: string,
+  name: string,
+  mainCharacterName: string,
+  mainCharacterUrl: string
 ): Promise<string> {
   const lunaBackendUrl = getEnvVars().LUNABACKEND;
   const response = await fetchWithRetry(lunaBackendUrl, {
     method: "POST",
     body: JSON.stringify({
-      PlotPrompt: prompt,
+      PlotPrompt,
+      name,
+      mainCharacterName,
+      mainCharacterUrl,
       workflowID: getEnvVars().LUNAWORKFLOWID,
-      name: "Script Generation",
     }),
     headers: { "Content-Type": "application/json" },
   });
@@ -58,15 +68,16 @@ export async function generateScriptGenerationTask(
 }
 
 export async function getScriptGenerationResult(
-  taskId: string,
-  botUrl: string
+  taskId: string
 ): Promise<VideoInput> {
+  let resp: ScriptResponse;
   while (true) {
     const taskResponse = await fetchWithRetry(
       `${getEnvVars().LUNABACKEND}/api/SoraAPI/CheckWorkflowStatus`,
       {
         method: "POST",
         body: JSON.stringify({ id: taskId }),
+        headers: { "Content-Type": "application/json" },
       }
     );
     const res: any = await taskResponse.json();
@@ -78,13 +89,75 @@ export async function getScriptGenerationResult(
         ].steps.length - 1
       ].value !== ""
     ) {
-      const mainCharacterImage = await fetchBotImageUrl(botUrl);
-      if (!mainCharacterImage) {
-        throw new Error("Failed to fetch bot image");
+      console.log("Script generation completed");
+      // use z to parse the response
+      const parsedResponse = scriptResponseSchema.safeParse(res);
+      if (!parsedResponse.success) {
+        throw new Error(parsedResponse.error.errors.join("\n"));
       }
-      // TODO: combination of the steps
+      resp = parsedResponse.data;
+      break;
     }
     await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+  try {
+    const finalMegePos: number = 5;
+    const characterPos: number = 6;
+    const musicPos: number = 7;
+    const voicePos: number = 8;
+
+    // get the shots
+    const shotsOriginal = JSON.parse(
+      resp.data.workflowData.timeline[finalMegePos].steps[
+        resp.data.workflowData.timeline[finalMegePos].steps.length - 1
+      ].value
+    );
+    //
+    let shots = [];
+    if (Array.isArray(shotsOriginal)) {
+      shots = shotsOriginal[0].shots;
+    } else {
+      shots = shotsOriginal.shots;
+    }
+    // get the voice map
+    const voiceArray = JSON.parse(
+      resp.data.workflowData.timeline[voicePos].steps[
+        resp.data.workflowData.timeline[voicePos].steps.length - 1
+      ].value
+    );
+    const voiceMap = voiceArray.reduce((acc: any, cur: any) => {
+      acc[cur.characterName] = cur.id;
+      return acc;
+    }, {});
+
+    // get the character map
+    const characterMap = JSON.parse(
+      resp.data.workflowData.timeline[characterPos].steps[
+        resp.data.workflowData.timeline[characterPos].steps.length - 1
+      ].value
+    );
+
+    // get the background music
+    const backgroundMusic = JSON.parse(
+      resp.data.workflowData.timeline[musicPos].steps[
+        resp.data.workflowData.timeline[musicPos].steps.length - 1
+      ].value
+    ).name;
+
+    const input: VideoInput = {
+      videoInput: {
+        shots: shots,
+      },
+      characterMap: characterMap,
+      voiceMap: voiceMap,
+      options: {
+        background_music: backgroundMusic,
+      },
+    };
+    return input;
+  } catch (error) {
+    console.error("Error in getting script generation result:", error);
+    throw error;
   }
 }
 
