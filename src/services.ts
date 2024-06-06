@@ -42,17 +42,20 @@ export async function generateScriptGenerationTask(
   mainCharacterUrl: string
 ): Promise<string> {
   const lunaBackendUrl = getEnvVars().LUNABACKEND;
-  const response = await fetchWithRetry(lunaBackendUrl, {
-    method: "POST",
-    body: JSON.stringify({
-      PlotPrompt,
-      name,
-      mainCharacterName,
-      mainCharacterUrl,
-      workflowID: getEnvVars().LUNAWORKFLOWID,
-    }),
-    headers: { "Content-Type": "application/json" },
-  });
+  const response = await fetchWithRetry(
+    `${lunaBackendUrl}/api/SoraAPI/AddWorkflowData`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        PlotPrompt,
+        name,
+        mainCharacterName,
+        mainCharacterUrl,
+        workflowID: getEnvVars().LUNAWORKFLOWID,
+      }),
+      headers: { "Content-Type": "application/json" },
+    }
+  );
   if (!response.ok) {
     throw new Error("Failed to generate task");
   }
@@ -119,6 +122,12 @@ export async function getScriptGenerationResult(
     } else {
       shots = shotsOriginal.shots;
     }
+    // 遍历 shots，将每个 shot 的 shot_number 转换为 number
+    shots = shots.map((shot: any) => {
+      shot.shot_number = Number(shot.shot_number);
+      return shot;
+    });
+
     // get the voice map
     const voiceArray = JSON.parse(
       resp.data.workflowData.timeline[voicePos].steps[
