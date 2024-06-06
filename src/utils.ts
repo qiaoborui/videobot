@@ -6,18 +6,21 @@ import Redis from "ioredis";
 export async function fetchWithRetry(
   url: string,
   options = {},
-  retryTimes = 3
+  retryTimes = 5
 ): Promise<Response> {
   let retries = 0;
   while (retries < retryTimes) {
     try {
       const response = await fetch(url, options);
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(
+          `HTTP error! Status: ${response.status} - ${await response.text()}`
+        );
       }
       return response;
     } catch (e) {
-      console.log(`Failed to fetch ${url}, retrying...`);
+      console.error(`Failed to fetch ${url}, retrying...`);
+      console.error(e);
       retries++;
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
