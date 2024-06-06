@@ -10,7 +10,7 @@ import {
   ScriptResponse,
 } from "./validators";
 
-export async function fetchDetail(botUrl: string): Promise<{
+export async function fetchBotDetail(botUrl: string): Promise<{
   thumbnailURL: string;
   title: string;
 }> {

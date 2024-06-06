@@ -1,12 +1,13 @@
 // 导入所需的模块
 import { REST, Routes, Client, GatewayIntentBits } from "discord.js";
-import { commands } from "./types";
+import { commands, VideoInput } from "./types";
 import { getEnvVars } from "./utils";
 import {
   generateScriptGenerationTask,
   generateVideoGenerationTask,
   getScriptGenerationResult,
   getVideoGenerationResult,
+  fetchBotDetail,
 } from "./services";
 import { TaskQueue, Status, Task } from "./taskQueue";
 import { redisClient } from "./utils";
@@ -66,68 +67,12 @@ async function main() {
   });
   client.login(TOKEN);
 }
-// use client to send a msg to the user
 
 main();
-// setInterval(() => {
-//   checkAndUpdateTasks();
-// }, 5000);
 
-// async function checkAndUpdateTasks() {
-//   try {
-//     const tasks = await taskQueue.listTasks();
-//     tasks.forEach((task) => processTask(task));
-//   } catch (error) {
-//     console.error("Failed to list or process tasks:", error);
-//   }
-// }
-
-// async function processTask(task: Task) {
-//   if (!taskMemory.includes(task.id) && task.status === Status.QUEUED) {
-//     taskMemory.push(task.id);
-//     await updateTaskStatus(task.id, Status.GENERATING_SCRIPT);
-//     handleScriptGeneration(task);
-//   }
-//   if (taskMemory.includes(task.id) && task.status === Status.DONE) {
-//     // send result to user by task.userId
-//   }
-// }
-
-// async function handleScriptGeneration(task: Task) {
-//   try {
-//     //const scriptTaskId = await generateScriptGenerationTask(task.prompt);
-//     // const scriptResult = await getScriptGenerationResult(
-//     //   scriptTaskId,
-//     //   task.boturl
-//     // );
-//     await handleVideoGeneration(task, "scriptResult");
-//   } catch (error) {
-//     console.error("Script generation failed:", error);
-//     await updateTaskStatus(task.id, Status.FAILED);
-//   }
-// }
-
-// async function handleVideoGeneration(task: Task, scriptResult) {
-//   try {
-//     //const videoTaskId = await generateVideoGenerationTask(scriptResult);
-//     //await getVideoGenerationResult(videoTaskId);
-//     await updateTaskStatus(task.id, Status.DONE);
-//   } catch (error) {
-//     console.error("Video generation failed:", error);
-//     await updateTaskStatus(task.id, Status.FAILED);
-//   }
-// }
-
-// async function updateTaskStatus(taskId, status: Status) {
-//   try {
-//     await taskQueue.updateTaskStatus(taskId, status);
-//   } catch (error) {
-//     console.error(`Failed to update status for task ${taskId}:`, error);
-//   }
-// }
 setInterval(() => {
   checkAndUpdateTasks();
-}, 1000);
+}, 5000);
 
 async function checkAndUpdateTasks() {
   try {
@@ -139,12 +84,14 @@ async function checkAndUpdateTasks() {
 }
 
 async function processTask(task: Task) {
+  // check if task is not already being processed and is in QUEUED status
   if (!taskMemory.includes(task.id) && task.status === Status.QUEUED) {
     console.log(`Processing task ${task.id} for user ${task.userId}`);
     taskMemory.push(task.id);
     await updateTaskStatus(task.id, Status.GENERATING_SCRIPT);
     handleScriptGeneration(task);
   }
+  // check if task is in memory and is done
   if (taskMemory.includes(task.id) && task.status === Status.DONE) {
     console.log(`Task ${task.id} for user ${task.userId} is done.`);
     taskMemory.splice(taskMemory.indexOf(task.id), 1);
@@ -155,6 +102,7 @@ async function processTask(task: Task) {
       `./videos/test.mp4`
     );
   }
+  // check if task is in memory and has failed
   if (taskMemory.includes(task.id) && task.status === Status.FAILED) {
     console.log(`Task ${task.id} for user ${task.userId} failed.`);
     taskMemory.splice(taskMemory.indexOf(task.id), 1);
@@ -168,20 +116,27 @@ async function processTask(task: Task) {
 
 async function handleScriptGeneration(task: Task) {
   try {
-    setTimeout(async () => {
-      await handleVideoGeneration(task, "scriptResult");
-    }, 2000); // 模拟脚本生成
+    const bot = await fetchBotDetail(task.boturl);
+    const scriptTaskId = await generateScriptGenerationTask(
+      task.prompt,
+      task.userId,
+      bot.title,
+      bot.thumbnailURL
+    );
+    const scriptResult = await getScriptGenerationResult(scriptTaskId);
+    await handleVideoGeneration(task, scriptResult);
   } catch (error) {
     console.error("Script generation failed:", error);
     await updateTaskStatus(task.id, Status.FAILED);
   }
 }
 
-async function handleVideoGeneration(task: Task, scriptResult: string) {
+async function handleVideoGeneration(task: Task, scriptResult: VideoInput) {
   try {
-    setTimeout(async () => {
-      await updateTaskStatus(task.id, Status.DONE);
-    }, 3000); // 模拟视频生成
+    const videoTaskId = await generateVideoGenerationTask(scriptResult);
+    const videoResult = await getVideoGenerationResult(videoTaskId);
+    task.result = videoResult;
+    await updateTaskStatus(task.id, Status.DONE);
   } catch (error) {
     console.error("Video generation failed:", error);
     await updateTaskStatus(task.id, Status.FAILED);
