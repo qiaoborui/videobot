@@ -41,6 +41,8 @@ export async function generateScriptGenerationTask(
   mainCharacterName: string,
   mainCharacterUrl: string
 ): Promise<string> {
+  // log current step
+  console.log("Generating script generation task");
   const lunaBackendUrl = getEnvVars().LUNABACKEND;
   const response = await fetchWithRetry(
     `${lunaBackendUrl}/api/SoraAPI/AddWorkflowData`,
@@ -66,13 +68,14 @@ export async function generateScriptGenerationTask(
     throw new Error(parsedResponse.error.errors.join("\n"));
   }
   const taskId = parsedResponse.data.data.workflowID;
-
+  console.log("Script generation task created with ID:", taskId);
   return taskId;
 }
 
 export async function getScriptGenerationResult(
   taskId: string
 ): Promise<VideoInput> {
+  console.log("Checking script generation status");
   let resp: ScriptResponse;
   while (true) {
     const taskResponse = await fetchWithRetry(
@@ -163,6 +166,7 @@ export async function getScriptGenerationResult(
         background_music: backgroundMusic,
       },
     };
+    console.log("Script generation result:", input);
     return input;
   } catch (error) {
     console.error("Error in getting script generation result:", error);
@@ -173,6 +177,7 @@ export async function getScriptGenerationResult(
 export async function generateVideoGenerationTask(
   scripts: VideoInput
 ): Promise<string> {
+  console.log("Generating video generation task");
   const videoGenerationUrl = `${
     getEnvVars().FLOWBACKEND
   }/creator/internal/video-generation/queue`;
@@ -189,31 +194,50 @@ export async function generateVideoGenerationTask(
   if (!parsedResponse.success) {
     throw new Error(parsedResponse.error.errors.join("\n"));
   }
+  console.log(
+    "Video generation task created with ID:",
+    parsedResponse.data.taskId
+  );
   return parsedResponse.data.taskId;
 }
 
 export async function getVideoGenerationResult(
   taskId: string
 ): Promise<string> {
-  while (true) {
-    const videoGenerationUrl = `${
-      getEnvVars().FLOWBACKEND
-    }/creator/internal/video-generation/result`;
-    const response = await fetchWithRetry(videoGenerationUrl, {
-      method: "POST",
-      body: JSON.stringify({ taskId }),
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!response.ok) {
-      throw new Error("Failed to check task status");
+  console.log("Checking video generation status");
+  try {
+    while (true) {
+      const videoGenerationUrl = `${
+        getEnvVars().FLOWBACKEND
+      }/creator/internal/video-generation/result`;
+      const response = await fetchWithRetry(videoGenerationUrl, {
+        method: "POST",
+        body: JSON.stringify({ taskId }),
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to check task status");
+      }
+      const responseBody = await response.json();
+      const parsedResponse = checkStatusResponseSchema.safeParse(responseBody);
+      if (!parsedResponse.success) {
+        throw new Error(parsedResponse.error.errors.join("\n"));
+      }
+      if (parsedResponse.data.status === "finished") {
+        console.log("Video generation completed");
+        return parsedResponse.data.result!.file!;
+      }
+      if (parsedResponse.data.status === "failed") {
+        console.error(
+          "Video generation failed:",
+          parsedResponse.data.result!.err
+        );
+        throw new Error(parsedResponse.data.result!.err);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10000));
     }
-    const responseBody = await response.json();
-    const parsedResponse = checkStatusResponseSchema.safeParse(responseBody);
-    if (!parsedResponse.success) {
-      throw new Error(parsedResponse.error.errors.join("\n"));
-    }
-    if (parsedResponse.data.status === "finished") {
-      return parsedResponse.data.result.file!;
-    }
+  } catch (error) {
+    console.error("Error in getting video generation result:", error);
+    throw error;
   }
 }

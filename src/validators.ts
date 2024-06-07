@@ -31,11 +31,13 @@ export const submitVideoTaskResponseSchema = z.object({
 export const checkStatusResponseSchema = z.object({
   id: z.string(),
   status: z.string(),
-  result: z.object({
-    err: z.string().optional(),
-    file: z.string().optional(),
-    character: z.array(z.string()).optional(),
-  }),
+  result: z
+    .object({
+      err: z.string().optional(),
+      file: z.string().optional(),
+      character: z.array(z.string()).optional(),
+    })
+    .optional(),
   queuedAt: z.any().optional(),
 });
 

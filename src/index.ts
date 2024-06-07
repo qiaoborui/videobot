@@ -1,7 +1,7 @@
 // 导入所需的模块
 import { REST, Routes, Client, GatewayIntentBits } from "discord.js";
 import { commands, VideoInput } from "./types";
-import { getEnvVars } from "./utils";
+import { getEnvVars, downloadMedia } from "./utils";
 import {
   generateScriptGenerationTask,
   generateVideoGenerationTask,
@@ -95,11 +95,14 @@ async function processTask(task: Task) {
   if (taskMemory.includes(task.id) && task.status === Status.DONE) {
     console.log(`Task ${task.id} for user ${task.userId} is done.`);
     taskMemory.splice(taskMemory.indexOf(task.id), 1);
+    // download the result to videos directory
+    const videoPath = `./videos/${task.id}.mp4`;
+    await downloadMedia(task.result, videoPath);
     await replyToUserInChannel(
       task.channelId,
       task.userId,
       "Your video is ready.",
-      `./videos/test.mp4`
+      videoPath
     );
   }
   // check if task is in memory and has failed
@@ -137,8 +140,8 @@ async function handleVideoGeneration(task: Task, scriptResult: VideoInput) {
     const videoResult = await getVideoGenerationResult(videoTaskId);
     task.result = videoResult;
     await updateTaskStatus(task.id, Status.DONE);
-  } catch (error) {
-    console.error("Video generation failed:", error);
+  } catch (error: any) {
+    console.error("Video generation failed:", error.message);
     await updateTaskStatus(task.id, Status.FAILED);
   }
 }
