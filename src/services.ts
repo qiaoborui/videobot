@@ -9,7 +9,7 @@ import {
   scriptResponseSchema,
   ScriptResponse,
 } from "./validators";
-import { taskQueue } from ".";
+import { taskQueue } from "./schedule";
 
 export async function fetchBotDetail(task: Task): Promise<void> {
   logCurrentStep(task, "Fetching bot details");
@@ -43,7 +43,9 @@ export async function generateScriptGenerationTask(task: Task): Promise<void> {
       method: "POST",
       body: JSON.stringify({
         PlotPrompt: task.data.prompt,
-        name: task.userId,
+        name: `${task.data.maincharacter}\n ${new Date().toISOString()}\n ${
+          task.userId
+        }`,
         mainCharacterName: task.data.maincharacter,
         mainCharacterUrl: task.data.maincharacterurl,
         workflowID: getEnvVars().LUNAWORKFLOWID,
@@ -68,6 +70,7 @@ export async function generateScriptGenerationTask(task: Task): Promise<void> {
 export async function getScriptGenerationResult(task: Task): Promise<void> {
   logCurrentStep(task, "Checking script generation status");
   let resp: ScriptResponse;
+  const startTime = Date.now();
   while (true) {
     const taskResponse = await fetchWithRetry(
       `${getEnvVars().LUNABACKEND}/api/SoraAPI/CheckWorkflowStatus`,
@@ -94,6 +97,9 @@ export async function getScriptGenerationResult(task: Task): Promise<void> {
       }
       resp = parsedResponse.data;
       break;
+    }
+    if (Date.now() - startTime > 30 * 60 * 1000) {
+      throw new Error("Script generation timed out");
     }
     await new Promise((resolve) => setTimeout(resolve, 5000));
   }
@@ -232,7 +238,10 @@ export async function getVideoGenerationResult(task: Task): Promise<void> {
       }
       if (parsedResponse.data.status === "finished") {
         console.log("Video generation completed");
-        taskQueue.updateTaskResult(task.id, parsedResponse.data.result!.file);
+        await taskQueue.updateTaskResult(
+          task.id,
+          parsedResponse.data.result!.file
+        );
         console.log("Video file:", task.result);
         return;
       }
