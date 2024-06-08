@@ -9,6 +9,7 @@ export interface Task {
   result?: any;
   queueAt?: number;
   data: z.infer<typeof userInputSchema>;
+  retryCount: number;
 }
 
 export enum Status {

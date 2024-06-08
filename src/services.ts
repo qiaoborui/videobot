@@ -9,6 +9,7 @@ import {
   scriptResponseSchema,
   ScriptResponse,
 } from "./validators";
+import { taskQueue } from ".";
 
 export async function fetchBotDetail(task: Task): Promise<void> {
   logCurrentStep(task, "Fetching bot details");
@@ -231,7 +232,8 @@ export async function getVideoGenerationResult(task: Task): Promise<void> {
       }
       if (parsedResponse.data.status === "finished") {
         console.log("Video generation completed");
-        task.result = parsedResponse.data.result!.file;
+        taskQueue.updateTaskResult(task.id, parsedResponse.data.result!.file);
+        console.log("Video file:", task.result);
         return;
       }
       if (parsedResponse.data.status === "aborted") {

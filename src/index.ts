@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 const TOKEN = getEnvVars().TOKEN;
 const CLIENT_ID = getEnvVars().CLIENT_ID;
-const taskQueue = new TaskQueue(redisClient, "discord-bot-tasks");
+export const taskQueue = new TaskQueue(redisClient, "discord-bot-tasks");
 const taskMemory: string[] = [];
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 async function registerCommands() {
@@ -67,6 +67,7 @@ async function main() {
           boturl,
           maincharacter,
         },
+        retryCount: 0,
       });
       interaction.reply(`Job queued with ID: ${taskId}`);
     }
@@ -108,36 +109,60 @@ async function checkAndUpdateTasks() {
 }
 
 async function processTask(task: Task) {
-  // check if task is not already being processed and is in QUEUED status
-  if (!taskMemory.includes(task.id) && task.status === Status.QUEUED) {
-    console.log(`Processing task ${task.id} for user ${task.userId}`);
-    taskMemory.push(task.id);
-    await updateTaskStatus(task.id, Status.GENERATING_SCRIPT);
-    handleScriptGeneration(task);
-  }
-  // check if task is in memory and is done
-  if (taskMemory.includes(task.id) && task.status === Status.DONE) {
-    console.log(`Task ${task.id} for user ${task.userId} is done.`);
-    taskMemory.splice(taskMemory.indexOf(task.id), 1);
-    // download the result to videos directory
-    const videoPath = `./videos/${task.id}.mp4`;
-    await downloadMedia(task.result, videoPath);
-    await replyToUserInChannel(
-      task.channelId,
-      task.userId,
-      "Your video is ready.",
-      videoPath
-    );
-  }
-  // check if task is in memory and has failed
-  if (taskMemory.includes(task.id) && task.status === Status.FAILED) {
-    console.log(`Task ${task.id} for user ${task.userId} failed.`);
-    taskMemory.splice(taskMemory.indexOf(task.id), 1);
-    await replyToUserInChannel(
-      task.channelId,
-      task.userId,
-      "Failed to generate video."
-    );
+  try {
+    // check if task is not already being processed and is in QUEUED status
+    if (!taskMemory.includes(task.id) && task.status === Status.QUEUED) {
+      console.log(`Processing task ${task.id} for user ${task.userId}`);
+      taskMemory.push(task.id);
+      await updateTaskStatus(task.id, Status.GENERATING_SCRIPT);
+      handleScriptGeneration(task);
+    }
+    // check if task is in memory and is done
+    if (
+      taskMemory.includes(task.id) &&
+      task.status === Status.DONE &&
+      task.result
+    ) {
+      console.log(`Task ${task.id} for user ${task.userId} is done.`);
+      taskMemory.splice(taskMemory.indexOf(task.id), 1);
+      // download the result to videos directory
+      const videoPath = `./videos/${task.id}.mp4`;
+      console.log("result", task.result);
+      await downloadMedia(task.result, videoPath);
+      await replyToUserInChannel(
+        task.channelId,
+        task.userId,
+        "Your video is ready.",
+        videoPath
+      );
+    }
+    // check if task is in memory and has failed
+    if (
+      taskMemory.includes(task.id) &&
+      task.status === Status.FAILED &&
+      task.retryCount >= 2
+    ) {
+      console.log(`Task ${task.id} for user ${task.userId} failed.`);
+      taskMemory.splice(taskMemory.indexOf(task.id), 1);
+      await replyToUserInChannel(
+        task.channelId,
+        task.userId,
+        "Failed to generate video."
+      );
+    }
+    // check if task is in memory and has failed
+    if (
+      taskMemory.includes(task.id) &&
+      task.status === Status.FAILED &&
+      task.retryCount < 2
+    ) {
+      console.log(`Task ${task.id} for user ${task.userId} failed.`);
+      console.log(`Retrying task ${task.id} for user ${task.userId}`);
+      taskMemory.splice(taskMemory.indexOf(task.id), 1);
+      await updateTaskStatus(task.id, Status.QUEUED);
+    }
+  } catch (error) {
+    console.error("Failed to process task:", error);
   }
 }
 
@@ -150,6 +175,7 @@ async function handleScriptGeneration(task: Task) {
   } catch (error) {
     console.error("Script generation failed:", error);
     await updateTaskStatus(task.id, Status.FAILED);
+    task.retryCount += 1;
   }
 }
 
@@ -162,6 +188,7 @@ async function handleVideoGeneration(task: Task) {
   } catch (error: any) {
     console.error("Video generation failed:", error.message);
     await updateTaskStatus(task.id, Status.FAILED);
+    task.retryCount += 1;
   }
 }
 
