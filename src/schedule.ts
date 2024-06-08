@@ -105,7 +105,7 @@ async function handleScriptGeneration(task: Task) {
   } catch (error) {
     console.error("Script generation failed:", error);
     await updateTaskStatus(task.id, Status.FAILED);
-    task.retryCount += 1;
+    await taskQueue.addRetryCount(task.id);
   }
 }
 
@@ -118,7 +118,7 @@ async function handleVideoGeneration(task: Task) {
   } catch (error: any) {
     console.error("Video generation failed:", error.message);
     await updateTaskStatus(task.id, Status.FAILED);
-    task.retryCount += 1;
+    await taskQueue.addRetryCount(task.id);
   }
 }
 

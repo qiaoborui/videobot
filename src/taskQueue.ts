@@ -49,6 +49,14 @@ export class TaskQueue {
     }
   }
 
+  async addRetryCount(taskId: string): Promise<void> {
+    const task = await this.getTask(taskId);
+    if (task) {
+      task.retryCount += 1;
+      await this.redis.hset(this.key, taskId, JSON.stringify(task));
+    }
+  }
+
   async listTasks(): Promise<Task[]> {
     const tasks = await this.redis.hvals(this.key);
     return tasks.map((task) => JSON.parse(task));
