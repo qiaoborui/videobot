@@ -1,5 +1,6 @@
 import Redis from "ioredis";
-
+import { userInputSchema } from "./types";
+import { z } from "zod";
 export interface Task {
   id: string;
   userId: string;
@@ -7,8 +8,7 @@ export interface Task {
   status: Status;
   result?: any;
   queueAt?: number;
-  prompt: string;
-  boturl: string;
+  data: z.infer<typeof userInputSchema>;
 }
 
 export enum Status {

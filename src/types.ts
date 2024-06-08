@@ -7,14 +7,20 @@ export const commands = [
     options: [
       {
         type: 3, // 字符串类型
-        name: "prompt",
-        description: "The prompt for the video generation.",
+        name: "boturl",
+        description: "The bot url for the video generation.",
         required: true,
       },
       {
         type: 3, // 字符串类型
-        name: "boturl",
-        description: "The bot url for the video generation.",
+        name: "maincharacter",
+        description: "The main character for the video generation.",
+        required: true,
+      },
+      {
+        type: 3, // 字符串类型
+        name: "story",
+        description: "The prompt for the video generation.",
         required: true,
       },
     ],
@@ -74,3 +80,12 @@ export const VideoInputSchema = z.object({
 export type VideoInput = z.infer<typeof VideoInputSchema>;
 
 export type VideoInputData = z.infer<typeof VideoInputDataSchema>;
+export const userInputSchema = z.object({
+  prompt: z.string(),
+  boturl: z.string(),
+  maincharacter: z.string().optional(),
+  maincharacterurl: z.string().optional(),
+  lunaTaskId: z.string().optional(),
+  videoTaskId: z.string().optional(),
+  videoInput: VideoInputSchema.optional(),
+});

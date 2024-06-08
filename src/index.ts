@@ -1,6 +1,6 @@
 // 导入所需的模块
 import { REST, Routes, Client, GatewayIntentBits } from "discord.js";
-import { commands, VideoInput } from "./types";
+import { commands } from "./types";
 import { getEnvVars, downloadMedia } from "./utils";
 import {
   generateScriptGenerationTask,
@@ -35,16 +35,19 @@ async function main() {
   if (!fs.existsSync(videosDir)) {
     fs.mkdirSync(videosDir);
   }
-  client.on("ready", () => {});
   client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
     const command = interaction.commandName;
     if (command === "generate") {
       // get the prompt and bot url from the interaction
-      const prompt = interaction.options.get("prompt")?.value as string;
+      const prompt = interaction.options.get("story")?.value as string;
+      const maincharacter = interaction.options.get("maincharacter")
+        ?.value as string;
       const boturl = interaction.options.get("boturl")?.value as string;
-      if (!prompt || !boturl) {
-        interaction.reply("Please provide a prompt and bot url.");
+      if (!prompt || !boturl || !maincharacter) {
+        interaction.reply(
+          "Invalid input. Please provide a prompt, bot url and main character."
+        );
         return;
       }
       const taskId = uuidv4();
@@ -59,8 +62,11 @@ async function main() {
         channelId: interaction.channel.id,
         status: Status.QUEUED,
         queueAt: Date.now(),
-        prompt,
-        boturl,
+        data: {
+          prompt,
+          boturl,
+          maincharacter,
+        },
       });
       interaction.reply(`Job queued with ID: ${taskId}`);
     }
@@ -72,11 +78,29 @@ main();
 
 setInterval(() => {
   checkAndUpdateTasks();
-}, 5000);
-
+}, 10000);
+let statusTable = {
+  taskWorking: 0,
+  taskInProgress: 0,
+};
 async function checkAndUpdateTasks() {
   try {
     const tasks = await taskQueue.listTasks();
+    const taskWorking = tasks.filter(
+      (task) =>
+        task.status === Status.QUEUED ||
+        task.status === Status.GENERATING_SCRIPT ||
+        task.status === Status.GENERATING_VIDEO
+    ).length;
+    const taskInProgress = taskMemory.length;
+    if (
+      taskWorking !== statusTable.taskWorking ||
+      taskInProgress !== statusTable.taskInProgress
+    ) {
+      console.table({ taskWorking, taskInProgress });
+      statusTable.taskWorking = taskWorking;
+      statusTable.taskInProgress = taskInProgress;
+    }
     tasks.forEach((task) => processTask(task));
   } catch (error) {
     console.error("Failed to list or process tasks:", error);
@@ -119,26 +143,21 @@ async function processTask(task: Task) {
 
 async function handleScriptGeneration(task: Task) {
   try {
-    const bot = await fetchBotDetail(task.boturl);
-    const scriptTaskId = await generateScriptGenerationTask(
-      task.prompt,
-      task.userId,
-      bot.title,
-      bot.thumbnailURL
-    );
-    const scriptResult = await getScriptGenerationResult(scriptTaskId);
-    await handleVideoGeneration(task, scriptResult);
+    await fetchBotDetail(task);
+    await generateScriptGenerationTask(task);
+    await getScriptGenerationResult(task);
+    await handleVideoGeneration(task);
   } catch (error) {
     console.error("Script generation failed:", error);
     await updateTaskStatus(task.id, Status.FAILED);
   }
 }
 
-async function handleVideoGeneration(task: Task, scriptResult: VideoInput) {
+async function handleVideoGeneration(task: Task) {
   try {
-    const videoTaskId = await generateVideoGenerationTask(scriptResult);
-    const videoResult = await getVideoGenerationResult(videoTaskId);
-    task.result = videoResult;
+    await updateTaskStatus(task.id, Status.GENERATING_VIDEO);
+    await generateVideoGenerationTask(task);
+    await getVideoGenerationResult(task);
     await updateTaskStatus(task.id, Status.DONE);
   } catch (error: any) {
     console.error("Video generation failed:", error.message);

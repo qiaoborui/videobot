@@ -1,6 +1,6 @@
-import { VideoInput } from "./types";
-import { fetchWithRetry } from "./utils";
-import { getEnvVars } from "./utils";
+import { Task } from "./taskQueue";
+import { VideoInputSchema } from "./types";
+import { fetchWithRetry, logCurrentStep, getEnvVars } from "./utils";
 import {
   submitScriptTaskResponseSchema,
   promptResponseSchema,
@@ -10,14 +10,12 @@ import {
   ScriptResponse,
 } from "./validators";
 
-export async function fetchBotDetail(botUrl: string): Promise<{
-  thumbnailURL: string;
-  title: string;
-}> {
-  if (!botUrl.startsWith("https://flowgpt.com/p/")) {
+export async function fetchBotDetail(task: Task): Promise<void> {
+  logCurrentStep(task, "Fetching bot details");
+  if (!task.data.boturl.startsWith("https://flowgpt.com/p/")) {
     throw new Error("Invalid bot URL");
   }
-  const botId = botUrl.split("/").pop();
+  const botId = task.data.boturl.split("/").pop();
   if (!botId) {
     throw new Error("Invalid bot URL");
   }
@@ -32,27 +30,21 @@ export async function fetchBotDetail(botUrl: string): Promise<{
   if (!parsedResponse.success) {
     throw new Error(parsedResponse.error.errors.join("\n"));
   }
-  return parsedResponse.data.prompt;
+  task.data.maincharacterurl = parsedResponse.data.prompt.thumbnailURL;
 }
 
-export async function generateScriptGenerationTask(
-  PlotPrompt: string,
-  name: string,
-  mainCharacterName: string,
-  mainCharacterUrl: string
-): Promise<string> {
-  // log current step
-  console.log("Generating script generation task");
+export async function generateScriptGenerationTask(task: Task): Promise<void> {
+  logCurrentStep(task, "Generating script");
   const lunaBackendUrl = getEnvVars().LUNABACKEND;
   const response = await fetchWithRetry(
     `${lunaBackendUrl}/api/SoraAPI/AddWorkflowData`,
     {
       method: "POST",
       body: JSON.stringify({
-        PlotPrompt,
-        name,
-        mainCharacterName,
-        mainCharacterUrl,
+        PlotPrompt: task.data.prompt,
+        name: task.userId,
+        mainCharacterName: task.data.maincharacter,
+        mainCharacterUrl: task.data.maincharacterurl,
         workflowID: getEnvVars().LUNAWORKFLOWID,
       }),
       headers: { "Content-Type": "application/json" },
@@ -69,20 +61,18 @@ export async function generateScriptGenerationTask(
   }
   const taskId = parsedResponse.data.data.workflowID;
   console.log("Script generation task created with ID:", taskId);
-  return taskId;
+  task.data.lunaTaskId = taskId;
 }
 
-export async function getScriptGenerationResult(
-  taskId: string
-): Promise<VideoInput> {
-  console.log("Checking script generation status");
+export async function getScriptGenerationResult(task: Task): Promise<void> {
+  logCurrentStep(task, "Checking script generation status");
   let resp: ScriptResponse;
   while (true) {
     const taskResponse = await fetchWithRetry(
       `${getEnvVars().LUNABACKEND}/api/SoraAPI/CheckWorkflowStatus`,
       {
         method: "POST",
-        body: JSON.stringify({ id: taskId }),
+        body: JSON.stringify({ id: task.data.lunaTaskId }),
         headers: { "Content-Type": "application/json" },
       }
     );
@@ -143,11 +133,25 @@ export async function getScriptGenerationResult(
     }, {});
 
     // get the character map
-    const characterMap = JSON.parse(
+    const characterMapOrigin = JSON.parse(
       resp.data.workflowData.timeline[characterPos].steps[
         resp.data.workflowData.timeline[characterPos].steps.length - 1
       ].value
     );
+    // 判断是数组还是对象
+    let characterMap;
+    if (Array.isArray(characterMapOrigin)) {
+      characterMap = characterMapOrigin[0];
+    } else {
+      characterMap = characterMapOrigin;
+    }
+    // 检查主角是否有 url 先判断是否有 url 这个属性，再判断是否有值,如果没有，就用 task.data.maincharacterurl
+    if (
+      !characterMap[task.data.maincharacter!] ||
+      !characterMap[task.data.maincharacter!].url
+    ) {
+      characterMap[task.data.maincharacter!].url = task.data.maincharacterurl;
+    }
 
     // get the background music
     const backgroundMusic = JSON.parse(
@@ -156,7 +160,7 @@ export async function getScriptGenerationResult(
       ].value
     ).name;
 
-    const input: VideoInput = {
+    const inputdata = {
       videoInput: {
         shots: shots,
       },
@@ -166,24 +170,28 @@ export async function getScriptGenerationResult(
         background_music: backgroundMusic,
       },
     };
-    console.log("Script generation result:", input);
-    return input;
+    // use z to parse the response
+    const input = JSON.stringify(inputdata);
+    const parsedResponse = VideoInputSchema.safeParse(JSON.parse(input));
+    if (!parsedResponse.success) {
+      throw new Error(parsedResponse.error.errors.join("\n"));
+    }
+    console.log("Script generation completed:", parsedResponse.data);
+    task.data.videoInput = parsedResponse.data;
   } catch (error) {
     console.error("Error in getting script generation result:", error);
     throw error;
   }
 }
 
-export async function generateVideoGenerationTask(
-  scripts: VideoInput
-): Promise<string> {
-  console.log("Generating video generation task");
+export async function generateVideoGenerationTask(task: Task): Promise<void> {
+  logCurrentStep(task, "Generating video");
   const videoGenerationUrl = `${
     getEnvVars().FLOWBACKEND
   }/creator/internal/video-generation/queue`;
   const response = await fetchWithRetry(videoGenerationUrl, {
     method: "POST",
-    body: JSON.stringify(scripts),
+    body: JSON.stringify(task.data.videoInput),
     headers: { "Content-Type": "application/json" },
   });
   if (!response.ok) {
@@ -198,13 +206,11 @@ export async function generateVideoGenerationTask(
     "Video generation task created with ID:",
     parsedResponse.data.taskId
   );
-  return parsedResponse.data.taskId;
+  task.data.videoTaskId = parsedResponse.data.taskId;
 }
 
-export async function getVideoGenerationResult(
-  taskId: string
-): Promise<string> {
-  console.log("Checking video generation status");
+export async function getVideoGenerationResult(task: Task): Promise<void> {
+  logCurrentStep(task, "Checking video generation status");
   try {
     while (true) {
       const videoGenerationUrl = `${
@@ -212,7 +218,7 @@ export async function getVideoGenerationResult(
       }/creator/internal/video-generation/result`;
       const response = await fetchWithRetry(videoGenerationUrl, {
         method: "POST",
-        body: JSON.stringify({ taskId }),
+        body: JSON.stringify({ taskId: task.data.videoTaskId }),
         headers: { "Content-Type": "application/json" },
       });
       if (!response.ok) {
@@ -225,9 +231,10 @@ export async function getVideoGenerationResult(
       }
       if (parsedResponse.data.status === "finished") {
         console.log("Video generation completed");
-        return parsedResponse.data.result!.file!;
+        task.result = parsedResponse.data.result!.file;
+        return;
       }
-      if (parsedResponse.data.status === "failed") {
+      if (parsedResponse.data.status === "aborted") {
         console.error(
           "Video generation failed:",
           parsedResponse.data.result!.err

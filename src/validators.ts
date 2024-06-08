@@ -5,7 +5,6 @@ import { z } from "zod";
 export const promptResponseSchema = z.object({
   prompt: z.object({
     thumbnailURL: z.string(),
-    title: z.string(),
   }),
 });
 

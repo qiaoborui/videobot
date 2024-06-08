@@ -38,12 +38,12 @@ export function getEnvVars() {
   }
   return parsedEnvVars.data;
 }
-export function logCurrentStep(task: Task, step: string) {
+export function logCurrentStep(task: Task, step: string, details?: any) {
   const userId = task.userId;
-  const prompt = task.prompt;
-  const boturl = task.boturl;
-  // print as a table
-  console.table({ userId, prompt, boturl, step });
+  const prompt = task.data.prompt;
+  const boturl = task.data.boturl;
+  // print a table with the task details
+  console.table({ userId, prompt, boturl, step, details });
 }
 
 export async function downloadMedia(url: string, filePath: string) {
