@@ -13,4 +13,4 @@ RUN npm install -g pnpm
 RUN pnpm install
 
 # 运行项目
-CMD ["pnpm", "start"]
+CMD ["pnpm", "dev"]

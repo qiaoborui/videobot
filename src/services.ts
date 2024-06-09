@@ -159,6 +159,7 @@ export async function getScriptGenerationResult(task: Task): Promise<void> {
     ) {
       characterMap[task.data.maincharacter!].url = task.data.maincharacterurl;
     }
+    delete characterMap["banned word identified"];
 
     // get the background music
     const backgroundMusic = JSON.parse(
