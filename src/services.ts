@@ -67,6 +67,43 @@ export async function generateScriptGenerationTask(task: Task): Promise<void> {
   task.data.lunaTaskId = taskId;
 }
 
+export async function generateScriptGenerationTaskSD(
+  task: Task
+): Promise<void> {
+  logCurrentStep(task, "Generating script");
+  const lunaBackendUrl = getEnvVars().LUNABACKEND;
+  const response = await fetchWithRetry(
+    `${lunaBackendUrl}/api/SoraAPI/AddWorkflowData`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        createType: "sd",
+        PlotPrompt: task.data.prompt,
+        name: `${new Date().toISOString()}\n ${task.userId}`,
+        mainCharacterName: "",
+        mainCharacterUrl: "",
+        enableSvd: true,
+        workflowID: getEnvVars().LUNAWORKFLOWID,
+        characterList: task.data.options.characterList,
+        sdOption: task.data.options.sdOption,
+      }),
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+  if (!response.ok) {
+    throw new Error("Failed to generate task");
+  }
+  // use z to parse the response
+  const responseBody = await response.json();
+  const parsedResponse = submitScriptTaskResponseSchema.safeParse(responseBody);
+  if (!parsedResponse.success) {
+    throw new Error(parsedResponse.error.errors.join("\n"));
+  }
+  const taskId = parsedResponse.data.data.workflowID;
+  console.log("Script generation task created with ID:", taskId);
+  task.data.lunaTaskId = taskId;
+}
+
 export async function getScriptGenerationResult(task: Task): Promise<void> {
   logCurrentStep(task, "Checking script generation status");
   let resp: ScriptResponse;
@@ -188,6 +225,130 @@ export async function getScriptGenerationResult(task: Task): Promise<void> {
     task.data.videoInput = parsedResponse.data;
   } catch (error) {
     console.error("Error in getting script generation result:", error);
+    throw error;
+  }
+}
+
+export async function getScriptGenerationResultSD(task: Task): Promise<void> {
+  logCurrentStep(task, "Checking script generation status");
+  let resp: ScriptResponse;
+  const startTime = Date.now();
+  while (true) {
+    const taskResponse = await fetchWithRetry(
+      `${getEnvVars().LUNABACKEND}/api/SoraAPI/CheckWorkflowStatus`,
+      {
+        method: "POST",
+        body: JSON.stringify({ id: task.data.lunaTaskId }),
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    const res: any = await taskResponse.json();
+    if (
+      res.data.workflowData.timeline[res.data.workflowData.timeline.length - 1]
+        .steps[
+        res.data.workflowData.timeline[
+          res.data.workflowData.timeline.length - 1
+        ].steps.length - 1
+      ].value !== ""
+    ) {
+      console.log("Script generation completed");
+      // use z to parse the response
+      const parsedResponse = scriptResponseSchema.safeParse(res);
+      if (!parsedResponse.success) {
+        throw new Error(parsedResponse.error.errors.join("\n"));
+      }
+      resp = parsedResponse.data;
+      break;
+    }
+    if (Date.now() - startTime > 30 * 60 * 1000) {
+      throw new Error("Script generation timed out");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+  try {
+    const finalMegePos: number = 4;
+    const characterPos: number = 5;
+    const sound_effect: number = 6;
+    const musicPos: number = 6;
+    const voicePos: number = 7;
+
+    // get the shots
+    const shotsOriginal = JSON.parse(
+      resp.data.workflowData.timeline[finalMegePos].steps[
+        resp.data.workflowData.timeline[finalMegePos].steps.length - 1
+      ].value
+    );
+    //
+    let shots = [];
+    if (Array.isArray(shotsOriginal)) {
+      shots = shotsOriginal[0].shots;
+    } else {
+      shots = shotsOriginal.shots;
+    }
+    // 遍历 shots，将每个 shot 的 shot_number 转换为 number
+    shots = shots.map((shot: any) => {
+      shot.shot_number = Number(shot.shot_number);
+      return shot;
+    });
+
+    // get the voice map
+    const voiceArray = JSON.parse(
+      resp.data.workflowData.timeline[voicePos].steps[
+        resp.data.workflowData.timeline[voicePos].steps.length - 1
+      ].value
+    );
+    const voiceMap = voiceArray.reduce((acc: any, cur: any) => {
+      acc[cur.characterName] = cur.id;
+      return acc;
+    }, {});
+
+    // get the character map
+    const characterMapOrigin = JSON.parse(
+      resp.data.workflowData.timeline[characterPos].steps[
+        resp.data.workflowData.timeline[characterPos].steps.length - 1
+      ].value
+    );
+    // 判断是数组还是对象
+    let characterMap;
+    if (Array.isArray(characterMapOrigin)) {
+      characterMap = characterMapOrigin[0];
+    } else {
+      characterMap = characterMapOrigin;
+    }
+
+    // get the background music
+    const backgroundMusic = JSON.parse(
+      resp.data.workflowData.timeline[musicPos].steps[0].value
+    ).name;
+
+    // // get the sound effects
+    // const soundEffects = JSON.parse(
+    //   resp.data.workflowData.timeline[sound_effect].steps[1].value
+    // );
+
+    const inputdata = {
+      videoInput: {
+        shots: shots,
+      },
+      characterMap: characterMap,
+      enableSvd: true,
+      voiceMap: voiceMap,
+      options: {
+        background_music: backgroundMusic,
+      },
+      // soundEffects: soundEffects,
+      sdOption: task.data.options.sdOption,
+    };
+    // use z to parse the response
+    const input = JSON.stringify(inputdata);
+    const parsedResponse = VideoInputSchema.safeParse(JSON.parse(input));
+    if (!parsedResponse.success) {
+      throw new Error(parsedResponse.error.errors.join("\n"));
+    }
+    console.log("Script generation completed:", parsedResponse.data);
+    task.data.videoInput = parsedResponse.data;
+  } catch (error: any) {
+    console.error("Error in getting script generation result:", error.message);
     throw error;
   }
 }

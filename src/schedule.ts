@@ -3,6 +3,8 @@ import { redisClient } from "./utils";
 import {
   fetchBotDetail,
   generateScriptGenerationTask,
+  generateScriptGenerationTaskSD,
+  getScriptGenerationResultSD,
   generateVideoGenerationTask,
   getScriptGenerationResult,
   getVideoGenerationResult,
@@ -40,6 +42,7 @@ let statusTable = {
 };
 async function processTask(task: Task) {
   try {
+    console.log("processTask");
     // check if task is not already being processed and is in QUEUED status
     if (!taskMemory.includes(task.id) && task.status === Status.QUEUED) {
       console.log(`Processing task ${task.id} for user ${task.userId}`);
@@ -98,9 +101,10 @@ async function processTask(task: Task) {
 
 async function handleScriptGeneration(task: Task) {
   try {
-    await fetchBotDetail(task);
-    await generateScriptGenerationTask(task);
-    await getScriptGenerationResult(task);
+    console.log("handleScriptGeneration");
+    //await fetchBotDetail(task);
+    await generateScriptGenerationTaskSD(task);
+    await getScriptGenerationResultSD(task);
     await handleVideoGeneration(task);
   } catch (error) {
     console.error("Script generation failed:", error);
@@ -111,6 +115,7 @@ async function handleScriptGeneration(task: Task) {
 
 async function handleVideoGeneration(task: Task) {
   try {
+    console.log("handleVideoGeneration");
     await updateTaskStatus(task.id, Status.GENERATING_VIDEO);
     await generateVideoGenerationTask(task);
     await getVideoGenerationResult(task);

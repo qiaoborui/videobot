@@ -1,21 +1,35 @@
 // 导入所需的模块
-import { REST, Routes, Client, GatewayIntentBits } from "discord.js";
-import { commands } from "./types";
+import {
+  REST,
+  Routes,
+  Client,
+  GatewayIntentBits,
+  Collection,
+} from "discord.js";
 import { getEnvVars } from "./utils";
-import { Status } from "./taskQueue";
-import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
-import { checkAndUpdateTasks, taskQueue } from "./schedule";
+import { checkAndUpdateTasks } from "./schedule";
+import { command } from "./commands/generate";
+interface CustomClient extends Client {
+  commands?: Collection<string, any>;
+}
 
 const TOKEN = getEnvVars().TOKEN;
 const CLIENT_ID = getEnvVars().CLIENT_ID;
 
-export const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+export const client: CustomClient = new Client({
+  intents: [GatewayIntentBits.Guilds],
+});
+
+client.commands = new Collection();
+client.commands.set(command.data.name, command);
 async function registerCommands() {
   const rest = new REST({ version: "10" }).setToken(TOKEN);
   try {
     console.log("Started refreshing application (/) commands.");
-    await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
+    await rest.put(Routes.applicationCommands(CLIENT_ID), {
+      body: [command.data.toJSON()],
+    });
     console.log("Successfully reloaded application (/) commands.");
   } catch (error) {
     console.error(error);
@@ -30,48 +44,60 @@ async function main() {
   }
   client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
-    const command = interaction.commandName;
-    if (command === "generate") {
-      // get the prompt and bot url from the interaction
-      const prompt = interaction.options.get("story")?.value as string;
-      const maincharacter = interaction.options.get("maincharacter")
-        ?.value as string;
-      const boturl = interaction.options.get("boturl")?.value as string;
-      if (!prompt || !boturl || !maincharacter) {
-        interaction.reply(
-          "Invalid input. Please provide a prompt, bot url and main character."
-        );
-        return;
-      }
-      const taskId = uuidv4();
-      if (!interaction.channel) {
-        interaction.reply("Please use this command in a server channel.");
-        return;
-      }
-      console.log(interaction.user.id);
-      taskQueue.queueTask({
-        id: taskId,
-        userId: interaction.user.id,
-        channelId: interaction.channel.id,
-        status: Status.QUEUED,
-        queueAt: Date.now(),
-        data: {
-          prompt,
-          boturl,
-          maincharacter,
-        },
-        retryCount: 0,
+    const { commandName } = interaction;
+    const command = client.commands!.get(commandName);
+    if (!command) return;
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      console.error(error);
+      await interaction.reply({
+        content: "There was an error while executing this command!",
+        ephemeral: true,
       });
-      // reply with the input and the task id
-      interaction.reply(
-        `Task ${taskId} queued. \nPrompt: ${prompt}, Bot URL: ${boturl}, Main Character: ${maincharacter}`
-      );
     }
+    // const command = interaction.commandName;
+    // if (command === "generate") {
+    //   // get the prompt and bot url from the interaction
+    //   const prompt = interaction.options.get("story")?.value as string;
+    //   const maincharacter = interaction.options.get("maincharacter")
+    //     ?.value as string;
+    //   const boturl = interaction.options.get("boturl")?.value as string;
+    //   if (!prompt || !boturl || !maincharacter) {
+    //     interaction.reply(
+    //       "Invalid input. Please provide a prompt, bot url and main character."
+    //     );
+    //     return;
+    //   }
+    //   const taskId = uuidv4();
+    //   if (!interaction.channel) {
+    //     interaction.reply("Please use this command in a server channel.");
+    //     return;
+    //   }
+    //   console.log(interaction.user.id);
+    //   taskQueue.queueTask({
+    //     id: taskId,
+    //     userId: interaction.user.id,
+    //     channelId: interaction.channel.id,
+    //     status: Status.QUEUED,
+    //     queueAt: Date.now(),
+    //     data: {
+    //       prompt,
+    //       boturl,
+    //       maincharacter,
+    //     },
+    //     retryCount: 0,
+    //   });
+    //   // reply with the input and the task id
+    //   interaction.reply(
+    //     `Task ${taskId} queued. \nPrompt: ${prompt}, Bot URL: ${boturl}, Main Character: ${maincharacter}`
+    //   );
+    // }
   });
   client.login(TOKEN);
   setInterval(() => {
     checkAndUpdateTasks();
-  }, 10000);
+  }, 5000);
 }
 
 main();
