@@ -64,7 +64,9 @@ export async function generateScriptGenerationTask(task: Task): Promise<void> {
   }
   const taskId = parsedResponse.data.data.workflowID;
   console.log("Script generation task created with ID:", taskId);
-  task.data.lunaTaskId = taskId;
+  const data = task.data;
+  data.lunaTaskId = taskId;
+  taskQueue.setTaskData(task.id, data);
 }
 
 export async function generateScriptGenerationTaskSD(
@@ -101,7 +103,9 @@ export async function generateScriptGenerationTaskSD(
   }
   const taskId = parsedResponse.data.data.workflowID;
   console.log("Script generation task created with ID:", taskId);
-  task.data.lunaTaskId = taskId;
+  const data = task.data;
+  data.lunaTaskId = taskId;
+  taskQueue.setTaskData(task.id, data);
 }
 
 export async function getScriptGenerationResult(task: Task): Promise<void> {
@@ -222,7 +226,9 @@ export async function getScriptGenerationResult(task: Task): Promise<void> {
       throw new Error(parsedResponse.error.errors.join("\n"));
     }
     console.log("Script generation completed:", parsedResponse.data);
-    task.data.videoInput = parsedResponse.data;
+    const data = task.data;
+    data.videoInput = parsedResponse.data;
+    taskQueue.setTaskData(task.id, data);
   } catch (error) {
     console.error("Error in getting script generation result:", error);
     throw error;
@@ -335,6 +341,11 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
       voiceMap: voiceMap,
       options: {
         background_music: backgroundMusic,
+        svd: {
+          fps: 12,
+          motionBucketId: 30,
+          high_motionBucketId: 90,
+        },
       },
       // soundEffects: soundEffects,
       sdOption: task.data.options.sdOption,
@@ -346,7 +357,9 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
       throw new Error(parsedResponse.error.errors.join("\n"));
     }
     console.log("Script generation completed:", parsedResponse.data);
-    task.data.videoInput = parsedResponse.data;
+    const data = task.data;
+    data.videoInput = parsedResponse.data;
+    taskQueue.setTaskData(task.id, data);
   } catch (error: any) {
     console.error("Error in getting script generation result:", error.message);
     throw error;

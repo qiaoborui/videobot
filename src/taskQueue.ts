@@ -72,6 +72,14 @@ export class TaskQueue {
     return task ? task.result : null;
   }
 
+  async setTaskData(taskId: string, data: any): Promise<void> {
+    const task = await this.getTask(taskId);
+    if (task) {
+      task.data = data;
+      await this.redis.hset(this.key, taskId, JSON.stringify(task));
+    }
+  }
+
   async getTaskQueueAt(taskId: string): Promise<any | null> {
     const task = await this.getTask(taskId);
     return task ? task.queueAt : null;

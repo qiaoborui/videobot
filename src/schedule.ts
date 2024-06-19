@@ -42,7 +42,6 @@ let statusTable = {
 };
 async function processTask(task: Task) {
   try {
-    console.log("processTask");
     // check if task is not already being processed and is in QUEUED status
     if (!taskMemory.includes(task.id) && task.status === Status.QUEUED) {
       console.log(`Processing task ${task.id} for user ${task.userId}`);
@@ -91,7 +90,20 @@ async function processTask(task: Task) {
     ) {
       console.log(`Task ${task.id} for user ${task.userId} failed.`);
       console.log(`Retrying task ${task.id} for user ${task.userId}`);
-      taskMemory.splice(taskMemory.indexOf(task.id), 1);
+      await updateTaskStatus(task.id, Status.QUEUED);
+    }
+    // check if task is not in memory and is generating video
+    if (
+      !taskMemory.includes(task.id) &&
+      task.status === Status.GENERATING_VIDEO &&
+      task.data.videoInput
+    ) {
+      await handleVideoGeneration(task);
+    }
+    if (
+      !taskMemory.includes(task.id) &&
+      task.status === Status.GENERATING_SCRIPT
+    ) {
       await updateTaskStatus(task.id, Status.QUEUED);
     }
   } catch (error) {

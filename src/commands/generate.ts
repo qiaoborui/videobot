@@ -61,7 +61,7 @@ export const command = {
     const userActiveTasks = userTasks.filter(
       (task) => task.status !== Status.DONE && task.status !== Status.FAILED
     );
-    if (userActiveTasks.length > 0) {
+    if (userActiveTasks.length > 2) {
       interaction.reply(
         "You have an active task. Please wait for it to finish."
       );

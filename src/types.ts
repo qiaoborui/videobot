@@ -34,6 +34,7 @@ const svdSchema = z.object({
   seed: z.number().optional(),
   decodeChunkSize: z.number().optional(),
   fps: z.number().optional(),
+  high_motionBucketId: z.number().optional(),
   motionBucketId: z.number().optional(),
   noiseAugStrength: z.number().optional(),
 });
