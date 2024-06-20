@@ -356,7 +356,7 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     //   sdOption: task.data.options.sdOption,
     // };
     // use z to parse the response
-    const inputdata = generateVideo(resp.data.workflowData);
+    const inputdata = generateVideo(resp.data);
     const input = JSON.stringify(inputdata);
     const parsedResponse = VideoInputSchema.safeParse(JSON.parse(input));
     if (!parsedResponse.success) {
