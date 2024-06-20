@@ -243,6 +243,7 @@ export async function getScriptGenerationResult(task: Task): Promise<void> {
 export async function getScriptGenerationResultSD(task: Task): Promise<void> {
   logCurrentStep(task, "Checking script generation status");
   let resp: ScriptResponse;
+  let res: any;
   const startTime = Date.now();
   while (true) {
     const taskResponse = await fetchWithRetry(
@@ -253,7 +254,7 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
         headers: { "Content-Type": "application/json" },
       }
     );
-    const res: any = await taskResponse.json();
+    res = await taskResponse.json();
     if (
       res.data.workflowData.timeline[res.data.workflowData.timeline.length - 1]
         .steps[
@@ -283,6 +284,20 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     // const musicPos: number = 6;
     // const voicePos: number = 7;
 
+    // // get the character map
+    // const characterMapOrigin = JSON.parse(
+    //   resp.data.workflowData.timeline[characterPos].steps[
+    //     resp.data.workflowData.timeline[characterPos].steps.length - 1
+    //   ].value
+    // );
+    // // 判断是数组还是对象
+    // let characterMap;
+    // if (Array.isArray(characterMapOrigin)) {
+    //   characterMap = characterMapOrigin[0];
+    // } else {
+    //   characterMap = characterMapOrigin;
+    // }
+
     // // get the shots
     // const shotsOriginal = JSON.parse(
     //   resp.data.workflowData.timeline[finalMegePos].steps[
@@ -301,7 +316,18 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     //   shot.shot_number = Number(shot.shot_number);
     //   return shot;
     // });
-
+    // // add the prompt to the image prompt
+    // for (let q = 0; q < shots.length; q++) {
+    //   for (let t = 0; t < resp.data.characterList.length; t++) {
+    //     if (shots[q].image.actor === resp.data.characterList[t].name) {
+    //       shots[q].image.image_prompt +=
+    //         "," +
+    //         resp.data.characterList[t].triggerWord +
+    //         "," +
+    //         resp.data.characterList[t].lora;
+    //     }
+    //   }
+    // }
     // // get the voice map
     // const voiceArray = JSON.parse(
     //   resp.data.workflowData.timeline[voicePos].steps[
@@ -312,20 +338,6 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     //   acc[cur.characterName] = cur.id;
     //   return acc;
     // }, {});
-
-    // // get the character map
-    // const characterMapOrigin = JSON.parse(
-    //   resp.data.workflowData.timeline[characterPos].steps[
-    //     resp.data.workflowData.timeline[characterPos].steps.length - 1
-    //   ].value
-    // );
-    // // 判断是数组还是对象
-    // let characterMap;
-    // if (Array.isArray(characterMapOrigin)) {
-    //   characterMap = characterMapOrigin[0];
-    // } else {
-    //   characterMap = characterMapOrigin;
-    // }
 
     // // get the background music
     // const backgroundMusic = JSON.parse(
@@ -356,7 +368,10 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     //   sdOption: task.data.options.sdOption,
     // };
     // use z to parse the response
-    const inputdata = generateVideo(resp.data);
+    const inputdata = generateVideo(res.data);
+    console.log("\n\n\n\n");
+    console.log(inputdata);
+    console.log("\n\n\n\n");
     const input = JSON.stringify(inputdata);
     const parsedResponse = VideoInputSchema.safeParse(JSON.parse(input));
     if (!parsedResponse.success) {

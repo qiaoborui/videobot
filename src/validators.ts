@@ -54,6 +54,15 @@ export const scriptResponseSchema = z.object({
         })
       ),
     }),
+    characterList: z.array(
+      z.object({
+        lora: z.string(),
+        name: z.string(),
+        triggerWord: z.string(),
+      })
+    ),
+    createType: z.string(),
+    enableSvd: z.boolean(),
   }),
 });
 
