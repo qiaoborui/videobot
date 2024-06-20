@@ -57,11 +57,13 @@ export const command = {
     // 在 task 中查找是否有相同的 userId，如果有，返回
     const tasks = await taskQueue.listTasks();
     const userTasks = tasks.filter((task) => task.userId === userId);
-    // 先判断状态是否为 done，如果是 done或者 failed，可以继续
     const userActiveTasks = userTasks.filter(
-      (task) => task.status !== Status.DONE && task.status !== Status.FAILED
+      (task) =>
+        task.status == Status.QUEUED ||
+        task.status == Status.GENERATING_SCRIPT ||
+        task.status == Status.GENERATING_VIDEO
     );
-    if (userActiveTasks.length > 2) {
+    if (userActiveTasks.length > 0) {
       interaction.reply(
         "You have an active task. Please wait for it to finish."
       );

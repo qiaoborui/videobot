@@ -25,8 +25,6 @@ export const personaArr = [
       steps: 20,
       cfg_scale: 5,
       styleLora: "",
-      positive_prompt:
-        "analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage",
       negative_prompt:
         "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
     },
@@ -49,8 +47,6 @@ export const personaArr = [
       steps: 20,
       cfg_scale: 5,
       styleLora: "<lora:331598:0.75>",
-      positive_prompt:
-        "analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage",
       negative_prompt:
         "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
     },
@@ -95,8 +91,6 @@ export const personaArr = [
       steps: 20,
       cfg_scale: 5,
       styleLora: "",
-      positive_prompt:
-        "analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage",
       negative_prompt:
         "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
     },
