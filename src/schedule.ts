@@ -119,7 +119,7 @@ async function handleScriptGeneration(task: Task) {
     await getScriptGenerationResultSD(task);
     await handleVideoGeneration(task);
   } catch (error) {
-    console.error("Script generation failed:", error);
+    console.error("Script generation failed:", JSON.stringify(error));
     await updateTaskStatus(task.id, Status.FAILED);
     await taskQueue.addRetryCount(task.id);
   }
