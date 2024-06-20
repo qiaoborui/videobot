@@ -102,6 +102,12 @@ async function processTask(task: Task) {
     }
     if (
       !taskMemory.includes(task.id) &&
+      task.status === Status.GENERATING_VIDEO
+    ) {
+      await updateTaskStatus(task.id, Status.QUEUED);
+    }
+    if (
+      !taskMemory.includes(task.id) &&
       task.status === Status.GENERATING_SCRIPT
     ) {
       await updateTaskStatus(task.id, Status.QUEUED);
