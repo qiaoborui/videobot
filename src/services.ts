@@ -1,6 +1,11 @@
 import { Task } from "./taskQueue";
 import { VideoInputSchema } from "./types";
-import { fetchWithRetry, logCurrentStep, getEnvVars } from "./utils";
+import {
+  fetchWithRetry,
+  logCurrentStep,
+  getEnvVars,
+  generateVideo,
+} from "./utils";
 import {
   submitScriptTaskResponseSchema,
   promptResponseSchema,
@@ -272,85 +277,86 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 5000));
   }
   try {
-    const finalMegePos: number = 4;
-    const characterPos: number = 5;
-    const sound_effect: number = 6;
-    const musicPos: number = 6;
-    const voicePos: number = 7;
+    // const finalMegePos: number = 4;
+    // const characterPos: number = 5;
+    // const sound_effect: number = 6;
+    // const musicPos: number = 6;
+    // const voicePos: number = 7;
 
-    // get the shots
-    const shotsOriginal = JSON.parse(
-      resp.data.workflowData.timeline[finalMegePos].steps[
-        resp.data.workflowData.timeline[finalMegePos].steps.length - 1
-      ].value
-    );
-    //
-    let shots = [];
-    if (Array.isArray(shotsOriginal)) {
-      shots = shotsOriginal[0].shots;
-    } else {
-      shots = shotsOriginal.shots;
-    }
-    // 遍历 shots，将每个 shot 的 shot_number 转换为 number
-    shots = shots.map((shot: any) => {
-      shot.shot_number = Number(shot.shot_number);
-      return shot;
-    });
-
-    // get the voice map
-    const voiceArray = JSON.parse(
-      resp.data.workflowData.timeline[voicePos].steps[
-        resp.data.workflowData.timeline[voicePos].steps.length - 1
-      ].value
-    );
-    const voiceMap = voiceArray.reduce((acc: any, cur: any) => {
-      acc[cur.characterName] = cur.id;
-      return acc;
-    }, {});
-
-    // get the character map
-    const characterMapOrigin = JSON.parse(
-      resp.data.workflowData.timeline[characterPos].steps[
-        resp.data.workflowData.timeline[characterPos].steps.length - 1
-      ].value
-    );
-    // 判断是数组还是对象
-    let characterMap;
-    if (Array.isArray(characterMapOrigin)) {
-      characterMap = characterMapOrigin[0];
-    } else {
-      characterMap = characterMapOrigin;
-    }
-
-    // get the background music
-    const backgroundMusic = JSON.parse(
-      resp.data.workflowData.timeline[musicPos].steps[0].value
-    ).name;
-
-    // // get the sound effects
-    // const soundEffects = JSON.parse(
-    //   resp.data.workflowData.timeline[sound_effect].steps[1].value
+    // // get the shots
+    // const shotsOriginal = JSON.parse(
+    //   resp.data.workflowData.timeline[finalMegePos].steps[
+    //     resp.data.workflowData.timeline[finalMegePos].steps.length - 1
+    //   ].value
     // );
+    // //
+    // let shots = [];
+    // if (Array.isArray(shotsOriginal)) {
+    //   shots = shotsOriginal[0].shots;
+    // } else {
+    //   shots = shotsOriginal.shots;
+    // }
+    // // 遍历 shots，将每个 shot 的 shot_number 转换为 number
+    // shots = shots.map((shot: any) => {
+    //   shot.shot_number = Number(shot.shot_number);
+    //   return shot;
+    // });
 
-    const inputdata = {
-      videoInput: {
-        shots: shots,
-      },
-      characterMap: characterMap,
-      enableSvd: true,
-      voiceMap: voiceMap,
-      options: {
-        background_music: backgroundMusic,
-        svd: {
-          fps: 12,
-          motionBucketId: 30,
-          high_motionBucketId: 90,
-        },
-      },
-      // soundEffects: soundEffects,
-      sdOption: task.data.options.sdOption,
-    };
+    // // get the voice map
+    // const voiceArray = JSON.parse(
+    //   resp.data.workflowData.timeline[voicePos].steps[
+    //     resp.data.workflowData.timeline[voicePos].steps.length - 1
+    //   ].value
+    // );
+    // const voiceMap = voiceArray.reduce((acc: any, cur: any) => {
+    //   acc[cur.characterName] = cur.id;
+    //   return acc;
+    // }, {});
+
+    // // get the character map
+    // const characterMapOrigin = JSON.parse(
+    //   resp.data.workflowData.timeline[characterPos].steps[
+    //     resp.data.workflowData.timeline[characterPos].steps.length - 1
+    //   ].value
+    // );
+    // // 判断是数组还是对象
+    // let characterMap;
+    // if (Array.isArray(characterMapOrigin)) {
+    //   characterMap = characterMapOrigin[0];
+    // } else {
+    //   characterMap = characterMapOrigin;
+    // }
+
+    // // get the background music
+    // const backgroundMusic = JSON.parse(
+    //   resp.data.workflowData.timeline[musicPos].steps[0].value
+    // ).name;
+
+    // // // get the sound effects
+    // // const soundEffects = JSON.parse(
+    // //   resp.data.workflowData.timeline[sound_effect].steps[1].value
+    // // );
+
+    // const inputdata = {
+    //   videoInput: {
+    //     shots: shots,
+    //   },
+    //   characterMap: characterMap,
+    //   enableSvd: true,
+    //   voiceMap: voiceMap,
+    //   options: {
+    //     background_music: backgroundMusic,
+    //     svd: {
+    //       fps: 12,
+    //       motionBucketId: 30,
+    //       high_motionBucketId: 90,
+    //     },
+    //   },
+    //   // soundEffects: soundEffects,
+    //   sdOption: task.data.options.sdOption,
+    // };
     // use z to parse the response
+    const inputdata = generateVideo(resp.data.workflowData);
     const input = JSON.stringify(inputdata);
     const parsedResponse = VideoInputSchema.safeParse(JSON.parse(input));
     if (!parsedResponse.success) {

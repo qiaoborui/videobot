@@ -57,6 +57,8 @@ const soundEffectSchema = z.object({
 });
 
 export const VideoInputSchema = z.object({
+  PlotPrompt: z.string().optional(),
+  flagName: z.string().optional(),
   videoInput: VideoInputDataSchema,
   // char name to image prompt
   characterMap: z.record(
