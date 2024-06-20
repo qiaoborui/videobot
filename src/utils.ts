@@ -366,22 +366,21 @@ export function generateVideo(finalData: any) {
           let flag = false;
           for (let t = 0; t < finalData.characterList.length; t++) {
             if (key === finalData.characterList[t].name) {
+              // testArr.image.image_prompt = testArr.image.image_prompt.replace(key, key + '(' + finalData.characterList[t].triggerWord + ',' + finalData.characterList[t].lora + ')')
               testArr.image.image_prompt = testArr.image.image_prompt.replace(
                 key,
-                key +
-                  "(" +
-                  finalData.characterList[t].triggerWord +
+                finalData.characterList[t].triggerWord +
                   "," +
-                  finalData.characterList[t].lora +
-                  ")"
+                  finalData.characterList[t].lora
               );
               flag = true;
             }
           }
           if (!flag) {
+            // testArr.image.image_prompt = testArr.image.image_prompt.replace(key, key + '(' + params.characterMap[key].prompt + ')')
             testArr.image.image_prompt = testArr.image.image_prompt.replace(
               key,
-              key + "(" + params.characterMap[key].prompt + ")"
+              params.characterMap[key].prompt
             );
           }
         }
