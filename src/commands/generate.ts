@@ -3,6 +3,7 @@ import { taskQueue } from "../schedule";
 import { Status } from "../taskQueue";
 import { v4 as uuidv4 } from "uuid";
 import { personaArr } from "../utils";
+import { getEnvVars } from "../utils";
 
 // use map to create the choices array
 const personaChoices = personaArr.map((persona) => [
@@ -50,9 +51,9 @@ export const command = {
       interaction.reply("Please use this command in a server channel.");
       return;
     }
-    let channels = ["1252962035264913459"];
+    const channels = getEnvVars().CHANNEL_IDS.split(",");
     if (!channels.includes(interaction.channel.id)) {
-      interaction.reply("Please use this command in a server channel.");
+      interaction.reply("Please use this command in a right channel.");
       return;
     }
     const userId = interaction.user.id;
@@ -65,7 +66,8 @@ export const command = {
         task.status == Status.GENERATING_SCRIPT ||
         task.status == Status.GENERATING_VIDEO
     );
-    if (userActiveTasks.length > 0) {
+    const times = getEnvVars().TIMES;
+    if (userActiveTasks.length > times - 1) {
       interaction.reply(
         "You have an active task. Please wait for it to finish."
       );
