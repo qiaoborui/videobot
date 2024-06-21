@@ -29,7 +29,9 @@ export const command = {
     .addStringOption((option) =>
       option
         .setName("story")
-        .setDescription("The prompt for the video generation.")
+        .setDescription(
+          "Create AI video with text. <important>Include character name in your prompt"
+        )
         .setRequired(true)
     ),
 

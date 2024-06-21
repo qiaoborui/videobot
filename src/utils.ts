@@ -13,7 +13,7 @@ export const personaArr = [
     characterList: [
       {
         name: "Yae Miko",
-        lora: "",
+        lora: "<lora:331598:0.75>",
         triggerWord: "yae miko, pink hair",
       },
     ],
@@ -206,7 +206,7 @@ export function generateVideo(finalData: any) {
             ).name,
             svd: {
               fps: 12,
-              motionBucketId: 90,
+              motionBucketId: 30,
               high_motionBucketId: 90,
             },
             minimax: {
