@@ -66,7 +66,7 @@ function generateVideo(finalData) {
           params.options = {
             svd: {
               fps: 12,
-              motionBucketId: 90,
+              motionBucketId: 30,
               high_motionBucketId: 90,
             },
             minimax: {
