@@ -90,6 +90,7 @@ async function processTask(task: Task) {
     ) {
       console.log(`Task ${task.id} for user ${task.userId} failed.`);
       console.log(`Retrying task ${task.id} for user ${task.userId}`);
+      taskMemory.splice(taskMemory.indexOf(task.id), 1);
       await updateTaskStatus(task.id, Status.QUEUED);
     }
     // check if task is not in memory and is generating video
