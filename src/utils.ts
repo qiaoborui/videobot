@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fetch from "node-fetch";
 import { Response } from "node-fetch";
 import * as dotenv from "dotenv";
@@ -258,7 +259,7 @@ export function generateVideo(finalData: any) {
           // params.videoInput = JSON.parse(finalData.workflowData.timeline[i].steps[j].value)
           let temp = JSON.parse(JSON.stringify(finalData));
           let obj = JSON.parse(temp.workflowData.timeline[i].steps[j].value);
-          let a: any = {};
+          let a = {};
           if (Object.prototype.toString.call(obj) === "[object Array]") {
             a = obj[0];
           } else if (
@@ -268,15 +269,11 @@ export function generateVideo(finalData: any) {
           }
           for (let q = 0; q < a.shots.length; q++) {
             a.shots[q].shot_number = parseInt(a.shots[q].shot_number);
-            for (let t = 0; t < finalData.characterList.length; t++) {
-              if (a.shots[q].image.actor === finalData.characterList[t].name) {
-                a.shots[q].image.image_prompt +=
-                  "," +
-                  finalData.characterList[t].triggerWord +
-                  "," +
-                  finalData.characterList[t].lora;
-              }
-            }
+            // for (let t = 0; t < finalData.characterList.length; t++) {
+            //   if (a.shots[q].image.actor === finalData.characterList[t].name) {
+            //     a.shots[q].image.image_prompt += ',' + finalData.characterList[t].triggerWord + ',' + finalData.characterList[t].lora
+            //   }
+            // }
           }
           params.videoInput = a;
         } else if (
@@ -295,22 +292,21 @@ export function generateVideo(finalData: any) {
               finalData.workflowData.timeline[i].steps[j].value
             ).name,
             svd: {
-              fps: 12,
-              motionBucketId: 90,
-              high_motionBucketId: 90,
+              fps: this.fps,
+              motionBucketId: this.motionBucketId,
+              high_motionBucketId: this.high_motionBucketId,
             },
             minimax: {
-              vol: 1,
-              speed: 1,
+              vol: this.vol,
+              speed: this.speed,
             },
           };
         } else if (
           finalData.workflowData.timeline[i].steps[j].id ===
           "LunaGarden-49770322-3526-4245-a87a-a68148e93a6b"
         ) {
-          console.log("444");
           params.voiceMap = {};
-          console.log(finalData.workflowData.timeline[i].steps[j].value);
+          // console.log(finalData.workflowData.timeline[i].steps[j].value)
           let temp = JSON.parse(
             finalData.workflowData.timeline[i].steps[j].value
           );
@@ -331,7 +327,7 @@ export function generateVideo(finalData: any) {
           ) {
             a = obj.shots;
           }
-          console.log(a);
+          // console.log(a)
           let arr = [];
           for (let i = 0; i < a.length; i++) {
             if (a[i].sound_effect !== "") {
@@ -348,45 +344,42 @@ export function generateVideo(finalData: any) {
     for (let q = 0; q < params.videoInput.shots.length; q++) {
       if (params.characterMap[params.videoInput.shots[q].image.actor]) {
         //检查params.videoInput.shots[q].image.image_prompt中有没有<lora
-        if (!params.videoInput.shots[q].image.image_prompt.includes("<lora")) {
-          params.videoInput.shots[q].image.image_prompt +=
-            "," +
-            params.characterMap[params.videoInput.shots[q].image.actor].prompt;
-        }
-      }
-      let testArr = params.videoInput.shots[q];
-      for (let key in params.characterMap) {
-        // 2. 排除obj.image.actor和key不相等值。SETTING不参与匹配。
-        if (
-          testArr.image.image_prompt.includes(key) &&
-          key !== testArr.image.actor &&
-          key !== "SETTING"
-        ) {
-          // 3. 如果出现和b中相同的key值，则将匹配到的替换第一个值为actorName+'('+ b[actorName].prompt +')'。
-          let flag = false;
-          for (let t = 0; t < finalData.characterList.length; t++) {
-            if (key === finalData.characterList[t].name) {
-              // testArr.image.image_prompt = testArr.image.image_prompt.replace(key, key + '(' + finalData.characterList[t].triggerWord + ',' + finalData.characterList[t].lora + ')')
-              testArr.image.image_prompt = testArr.image.image_prompt.replace(
-                key,
-                finalData.characterList[t].triggerWord +
-                  "," +
-                  finalData.characterList[t].lora
-              );
-              flag = true;
+        // if (!params.videoInput.shots[q].image.image_prompt.includes('<lora')) {
+        //   params.videoInput.shots[q].image.image_prompt += ',' + params.characterMap[params.videoInput.shots[q].image.actor].prompt
+        // }
+        if (this.characterPromptInit) {
+          let testArr = params.videoInput.shots[q];
+          for (let key in params.characterMap) {
+            // 2. 排除obj.image.actor和key不相等值。SETTING不参与匹配。
+            // if (testArr.image.image_prompt.includes(key) && key !== testArr.image.actor && key !== 'SETTING') {
+            if (testArr.image.image_prompt.includes(key) && key !== "SETTING") {
+              // 3. 如果出现和b中相同的key值，则将匹配到的替换第一个值为actorName+'('+ b[actorName].prompt +')'。
+              let flag = false;
+              for (let t = 0; t < finalData.characterList.length; t++) {
+                if (key === finalData.characterList[t].name) {
+                  // testArr.image.image_prompt = testArr.image.image_prompt.replace(key, key + '(' + finalData.characterList[t].triggerWord + ',' + finalData.characterList[t].lora + ')')
+                  testArr.image.image_prompt =
+                    testArr.image.image_prompt.replace(
+                      key,
+                      finalData.characterList[t].triggerWord +
+                        "," +
+                        finalData.characterList[t].lora
+                    );
+                  flag = true;
+                }
+              }
+              if (!flag) {
+                // testArr.image.image_prompt = testArr.image.image_prompt.replace(key, key + '(' + params.characterMap[key].prompt + ')')
+                testArr.image.image_prompt = testArr.image.image_prompt.replace(
+                  key,
+                  params.characterMap[key].prompt
+                );
+              }
             }
-          }
-          if (!flag) {
-            // testArr.image.image_prompt = testArr.image.image_prompt.replace(key, key + '(' + params.characterMap[key].prompt + ')')
-            testArr.image.image_prompt = testArr.image.image_prompt.replace(
-              key,
-              params.characterMap[key].prompt
-            );
           }
         }
       }
       if (params.sdOption.styleLora && params.sdOption.styleLora !== "") {
-        console.log(params.sdOption.styleLora);
         params.videoInput.shots[q].image.image_prompt +=
           "," + params.sdOption.styleLora;
       }
