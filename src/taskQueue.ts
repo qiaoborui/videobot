@@ -85,7 +85,7 @@ export class TaskQueue {
     return task ? task.queueAt : null;
   }
 
-  private async getTask(taskId: string): Promise<Task | null> {
+  async getTask(taskId: string): Promise<Task | null> {
     const taskJson = await this.redis.hget(this.key, taskId);
     return taskJson ? JSON.parse(taskJson) : null;
   }
