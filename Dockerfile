@@ -12,5 +12,8 @@ RUN npm install -g pnpm
 # 安装项目依赖
 RUN pnpm install
 
-# 运行项目
-CMD ["pnpm", "dev"]
+# 构建项目
+RUN pnpm run build
+
+# 运行  
+CMD ["pnpm", "start"]
