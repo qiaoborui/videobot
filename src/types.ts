@@ -8,7 +8,7 @@ export const envVarsSchema = z.object({
   LUNAWORKFLOWID: z.string(),
   REDIS_CLOUD_URL: z.string(),
   CHANNEL_IDS: z.string(),
-  TIMES: z.number(),
+  TIMES: z.string(),
 });
 
 const DialogueSchema = z.object({

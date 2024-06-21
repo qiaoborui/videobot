@@ -66,7 +66,7 @@ export const command = {
         task.status == Status.GENERATING_SCRIPT ||
         task.status == Status.GENERATING_VIDEO
     );
-    const times = getEnvVars().TIMES;
+    const times = parseInt(getEnvVars().TIMES);
     if (userActiveTasks.length > times - 1) {
       interaction.reply(
         "You have an active task. Please wait for it to finish."
