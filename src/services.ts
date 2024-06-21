@@ -381,10 +381,15 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     const data = task.data;
     data.videoInput = parsedResponse.data;
     taskQueue.setTaskData(task.id, data);
-  } catch (error: any) {
-    const errorString = JSON.stringify(error);
-    console.error("Error in getting script generation result:", errorString);
-    throw error;
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(
+        "Error in getting script generation result:",
+        error.message
+      );
+      throw error;
+    }
+    console.error("Error in getting script generation result:", error);
   }
 }
 
