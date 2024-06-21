@@ -8,6 +8,7 @@
     "strict": true,                 // 启用所有严格类型检查选项
     "esModuleInterop": true,        // 允许导出非 ES 模块
     "skipLibCheck": true,           // 跳过库文件的类型检查
+    "allowJs": true,
     "forceConsistentCasingInFileNames": true // 强制文件名大小写一致
   },
   "include": [

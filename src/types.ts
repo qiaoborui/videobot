@@ -53,7 +53,7 @@ const OptionSchema = z.object({
 
 const soundEffectSchema = z.object({
   shot_number: z.number(),
-  sound_effect: z.string(),
+  sound_effect_description: z.string(),
 });
 
 export const VideoInputSchema = z.object({

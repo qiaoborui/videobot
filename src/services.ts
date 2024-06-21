@@ -1,11 +1,8 @@
 import { Task } from "./taskQueue";
 import { VideoInputSchema } from "./types";
-import {
-  fetchWithRetry,
-  logCurrentStep,
-  getEnvVars,
-  generateVideo,
-} from "./utils";
+import { fetchWithRetry, logCurrentStep, getEnvVars } from "./utils";
+// @ts-ignore
+import scriptExtract from "./scriptExtract";
 import {
   submitScriptTaskResponseSchema,
   promptResponseSchema,
@@ -86,7 +83,7 @@ export async function generateScriptGenerationTaskSD(
       body: JSON.stringify({
         createType: "sd",
         PlotPrompt: task.data.prompt,
-        name: `${new Date().toISOString()}\n ${task.userId}`,
+        name: `${new Date().toISOString()}\n ${task.id}`,
         mainCharacterName: "",
         mainCharacterUrl: "",
         enableSvd: true,
@@ -368,7 +365,7 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     //   sdOption: task.data.options.sdOption,
     // };
     // use z to parse the response
-    const inputdata = generateVideo(res.data);
+    const inputdata = scriptExtract(res.data);
     console.log("\n\n\n\n");
     console.log(inputdata);
     console.log("\n\n\n\n");
@@ -388,8 +385,21 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
         error.message
       );
       throw error;
+    } else if (typeof error === "string") {
+      console.error("Error in getting script generation result:", error);
+      throw new Error(error);
+    } else if (typeof error === "object" && error !== null) {
+      console.error(
+        "Error in getting script generation result:",
+        JSON.stringify(error)
+      );
+      throw new Error(JSON.stringify(error));
+    } else {
+      console.error(
+        "Error in getting script generation result: Unknown error type"
+      );
+      throw new Error("Unknown error type");
     }
-    console.error("Error in getting script generation result:", error);
   }
 }
 
