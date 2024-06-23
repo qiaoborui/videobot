@@ -1,5 +1,6 @@
 import { title } from "process";
 import { z } from "zod";
+import { VideoInputSchema } from "./types";
 
 // prompt/:id response schema
 export const promptResponseSchema = z.object({
@@ -63,6 +64,7 @@ export const scriptResponseSchema = z.object({
     ),
     createType: z.string(),
     enableSvd: z.boolean(),
+    params: VideoInputSchema,
   }),
 });
 
