@@ -44,43 +44,6 @@ export async function generateScriptGenerationTask(task: Task): Promise<void> {
     {
       method: "POST",
       body: JSON.stringify({
-        PlotPrompt: task.data.prompt,
-        name: `${task.data.maincharacter}\n ${new Date().toISOString()}\n ${
-          task.userId
-        }`,
-        mainCharacterName: task.data.maincharacter,
-        mainCharacterUrl: task.data.maincharacterurl,
-        workflowID: getEnvVars().LUNAWORKFLOWID,
-      }),
-      headers: { "Content-Type": "application/json" },
-    }
-  );
-  if (!response.ok) {
-    throw new Error("Failed to generate task");
-  }
-  // use z to parse the response
-  const responseBody = await response.json();
-  const parsedResponse = submitScriptTaskResponseSchema.safeParse(responseBody);
-  if (!parsedResponse.success) {
-    throw new Error(parsedResponse.error.errors.join("\n"));
-  }
-  const taskId = parsedResponse.data.data.workflowID;
-  console.log("Script generation task created with ID:", taskId);
-  const data = task.data;
-  data.lunaTaskId = taskId;
-  taskQueue.setTaskData(task.id, data);
-}
-
-export async function generateScriptGenerationTaskSD(
-  task: Task
-): Promise<void> {
-  logCurrentStep(task, "Generating script");
-  const lunaBackendUrl = getEnvVars().LUNABACKEND;
-  const response = await fetchWithRetry(
-    `${lunaBackendUrl}/api/SoraAPI/AddWorkflowData`,
-    {
-      method: "POST",
-      body: JSON.stringify({
         createType: "sd",
         PlotPrompt: task.data.prompt,
         name: `${new Date().toISOString()}\n ${task.id}`,
