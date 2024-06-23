@@ -13,7 +13,7 @@ export const personaArr = [
     characterList: [
       {
         name: "Yae Miko",
-        lora: "<lora:331598:0.75>",
+        lora: "",
         triggerWord: "yae miko, pink hair",
       },
     ],
@@ -21,7 +21,7 @@ export const personaArr = [
       model: 303526,
       width: 1280,
       height: 720,
-      lora: "",
+      lora: "<lora:331598:0.75>",
       sampler: "Euler a",
       steps: 20,
       cfg_scale: 5,
@@ -92,6 +92,192 @@ export const personaArr = [
       steps: 20,
       cfg_scale: 5,
       styleLora: "",
+      negative_prompt:
+        "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
+    },
+  },
+  {
+    bot: "https://flowgpt.com/p/cloud-22",
+    characterList: [
+      {
+        name: "Cloud",
+        lora: "",
+        triggerWord:
+          "Cloud_strife, Blonde short hair, blue eyes, strong and tall, black  vest, black long jeans, 1boy ,",
+      },
+    ],
+    sdOption: {
+      model: 254091,
+      width: 1280,
+      height: 720,
+      lora: "",
+      sampler: "Euler a",
+      steps: 20,
+      cfg_scale: 5,
+      styleLora: "",
+      // positive_prompt:'analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage'
+      negative_prompt:
+        "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
+    },
+  },
+  {
+    bot: "https://flowgpt.com/p/asuka-53",
+    characterList: [
+      {
+        name: "Asuka",
+        lora: "",
+        triggerWord:
+          "Soryu Asuka Langley/(EVA/),fiery red eyes,red hair,tights,red battle suit,",
+      },
+    ],
+    sdOption: {
+      model: 403131,
+      width: 1280,
+      height: 720,
+      lora: "",
+      sampler: "Euler a",
+      steps: 20,
+      cfg_scale: 5,
+      styleLora: "<lora:427608:0.7>",
+      // positive_prompt:'analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage'
+      negative_prompt:
+        "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
+    },
+  },
+  {
+    bot: "https://flowgpt.com/p/joker-32",
+    characterList: [
+      {
+        name: "Joker",
+        lora: "<lora:249724:0.8>",
+        triggerWord: "Joker",
+      },
+    ],
+    sdOption: {
+      model: 303526,
+      width: 1280,
+      height: 720,
+      lora: "",
+      sampler: "Euler a",
+      steps: 20,
+      cfg_scale: 5,
+      styleLora: "",
+      // positive_prompt:'analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage'
+      negative_prompt:
+        "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
+    },
+  },
+  {
+    bot: "https://flowgpt.com/p/batman-16",
+    characterList: [
+      {
+        name: "Batman",
+        lora: "<lora:249675:0.8>",
+        triggerWord: "Batman",
+      },
+    ],
+    sdOption: {
+      model: 303526,
+      width: 1280,
+      height: 720,
+      lora: "",
+      sampler: "Euler a",
+      steps: 20,
+      cfg_scale: 5,
+      styleLora: "",
+      // positive_prompt:'analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage'
+      negative_prompt:
+        "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
+    },
+  },
+  {
+    bot: "https://flowgpt.com/p/tifa-34",
+    characterList: [
+      {
+        name: "Tifa",
+        lora: "",
+        triggerWord: "Tifa Lockhart,white vest,1girl,cute expression, ",
+      },
+    ],
+    sdOption: {
+      model: 254091,
+      width: 1280,
+      height: 720,
+      lora: "",
+      sampler: "Euler a",
+      steps: 20,
+      cfg_scale: 5,
+      styleLora: "",
+      // positive_prompt:'analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage'
+      negative_prompt:
+        "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
+    },
+  },
+  {
+    bot: "https://flowgpt.com/p/sailor-moon-6",
+    characterList: [
+      {
+        name: "Sailor Moon",
+        lora: "",
+        triggerWord: "Sailor Moon,White JK,",
+      },
+    ],
+    sdOption: {
+      model: 303526,
+      width: 1280,
+      height: 720,
+      lora: "",
+      sampler: "Euler a",
+      steps: 20,
+      cfg_scale: 5,
+      styleLora: "<lora:331598:0.8>",
+      // positive_prompt:'analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage'
+      negative_prompt:
+        "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
+    },
+  },
+  {
+    bot: "https://flowgpt.com/p/naomi-79",
+    characterList: [
+      {
+        name: "Naomi",
+        lora: "",
+        triggerWord: "Nami,Short hair, ",
+      },
+    ],
+    sdOption: {
+      model: 303526,
+      width: 1280,
+      height: 720,
+      lora: "",
+      sampler: "Euler a",
+      steps: 20,
+      cfg_scale: 5,
+      styleLora: "<lora:222794:0.7>",
+      // positive_prompt:'analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage'
+      negative_prompt:
+        "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
+    },
+  },
+  {
+    bot: "https://flowgpt.com/p/naruto-112",
+    characterList: [
+      {
+        name: "Naruto",
+        lora: "",
+        triggerWord: "naruto",
+      },
+    ],
+    sdOption: {
+      model: 303526,
+      width: 1280,
+      height: 720,
+      lora: "",
+      sampler: "Euler a",
+      steps: 20,
+      cfg_scale: 5,
+      styleLora: "<lora:379207:0.8>",
+      // positive_prompt:'analog film photo  . faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage'
       negative_prompt:
         "(02-A2(芩潇功能:0.9524)修手04完整版较推荐-bad_prompt), (low quality, worst quality:1.4),(bad-artist:0.7),(nsfw:1.8),multiple people,multiple heads,",
     },

@@ -9,7 +9,9 @@ import {
 import { getEnvVars } from "./utils";
 import fs from "fs";
 import { checkAndUpdateTasks } from "./schedule";
-import { command } from "./commands/generate";
+import { command as generateCommand } from "./commands/generate";
+import { command as listTaskCommand } from "./commands/listTask";
+import { command as queryTaskCommand } from "./commands/queryTask";
 interface CustomClient extends Client {
   commands?: Collection<string, any>;
 }
@@ -22,13 +24,17 @@ export const client: CustomClient = new Client({
 });
 
 client.commands = new Collection();
-client.commands.set(command.data.name, command);
+client.commands.set(generateCommand.data.name, generateCommand);
+client.commands.set(listTaskCommand.data.name, listTaskCommand);
+client.commands.set(queryTaskCommand.data.name, queryTaskCommand);
 async function registerCommands() {
   const rest = new REST({ version: "10" }).setToken(TOKEN);
   try {
     console.log("Started refreshing application (/) commands.");
+    // 根据命令集合注册命令
+    const commands = client.commands!.map((command) => command.data.toJSON());
     await rest.put(Routes.applicationCommands(CLIENT_ID), {
-      body: [command.data.toJSON()],
+      body: commands,
     });
     console.log("Successfully reloaded application (/) commands.");
   } catch (error) {

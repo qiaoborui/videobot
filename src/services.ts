@@ -253,12 +253,8 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     );
     res = await taskResponse.json();
     if (
-      res.data.workflowData.timeline[res.data.workflowData.timeline.length - 1]
-        .steps[
-        res.data.workflowData.timeline[
-          res.data.workflowData.timeline.length - 1
-        ].steps.length - 1
-      ].value !== ""
+      // 判断 res.data 有没有 params 这个属性
+      res.data.params
     ) {
       console.log("Script generation completed");
       // use z to parse the response
@@ -365,18 +361,19 @@ export async function getScriptGenerationResultSD(task: Task): Promise<void> {
     //   sdOption: task.data.options.sdOption,
     // };
     // use z to parse the response
-    const inputdata = scriptExtract(res.data);
-    console.log("\n\n\n\n");
-    console.log(inputdata);
-    console.log("\n\n\n\n");
-    const input = JSON.stringify(inputdata);
-    const parsedResponse = VideoInputSchema.safeParse(JSON.parse(input));
-    if (!parsedResponse.success) {
-      throw new Error(parsedResponse.error.errors.join("\n"));
-    }
-    console.log("Script generation completed:", parsedResponse.data);
+    // const inputdata = scriptExtract(res.data);
+    // console.log("\n\n\n\n");
+    // console.log(inputdata);
+    // console.log("\n\n\n\n");
+    // const input = JSON.stringify(inputdata);
+    const input = resp.data.params;
+    // const parsedResponse = VideoInputSchema.safeParse(JSON.parse(input));
+    // if (!parsedResponse.success) {
+    //   throw new Error(parsedResponse.error.errors.join("\n"));
+    // }
+    console.log("Script generation completed:", input);
     const data = task.data;
-    data.videoInput = parsedResponse.data;
+    data.videoInput = input;
     taskQueue.setTaskData(task.id, data);
   } catch (error: unknown) {
     if (error instanceof Error) {
