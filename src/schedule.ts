@@ -3,10 +3,8 @@ import { redisClient } from "./utils";
 import {
   fetchBotDetail,
   generateScriptGenerationTask,
-  generateScriptGenerationTaskSD,
   getScriptGenerationResultSD,
   generateVideoGenerationTask,
-  getScriptGenerationResult,
   getVideoGenerationResult,
 } from "./services";
 import { downloadMedia } from "./utils";
@@ -122,7 +120,7 @@ async function handleScriptGeneration(task: Task) {
   try {
     console.log("handleScriptGeneration");
     //await fetchBotDetail(task);
-    await generateScriptGenerationTaskSD(task);
+    await generateScriptGenerationTask(task);
     await getScriptGenerationResultSD(task);
     await handleVideoGeneration(task);
   } catch (error) {
