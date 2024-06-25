@@ -64,7 +64,7 @@ async function processTask(task: Task) {
       await replyToUserInChannel(
         task.channelId,
         task.userId,
-        "Your video is ready.",
+        `Your video is ready! \n Prompt:${task.data.prompt} `,
         videoPath
       );
     }
