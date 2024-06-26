@@ -50,7 +50,7 @@ export async function generateScriptGenerationTask(task: Task): Promise<void> {
         mainCharacterName: "",
         mainCharacterUrl: "",
         enableSvd: true,
-        workflowID: getEnvVars().LUNAWORKFLOWID,
+        workflowID: task.data.genre,
         characterList: task.data.options.characterList,
         sdOption: task.data.options.sdOption,
       }),

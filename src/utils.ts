@@ -284,6 +284,11 @@ export const personaArr = [
   },
 ];
 
+export const styleMap: Record<string, string> = {
+  General: "LunaGarden-4aea0b8e-e40b-4eef-bef1-1f2d0168eeaf",
+  Horror: "LunaGarden-99065073-f8bc-42dd-a382-def645914179",
+};
+
 export async function fetchWithRetry(
   url: string,
   options = {},

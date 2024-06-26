@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from "discord.js";
 import { taskQueue } from "../schedule";
 import { Status } from "../taskQueue";
 import { v4 as uuidv4 } from "uuid";
-import { personaArr } from "../utils";
+import { personaArr, styleMap } from "../utils";
 import { getEnvVars } from "../utils";
 
 // use map to create the choices array
@@ -34,11 +34,27 @@ export const command = {
           "Create AI video with text. <important>Include character name in your prompt"
         )
         .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName("genre")
+        .setDescription("The genre of the story")
+        .setRequired(false)
+        .addChoices(
+          Object.keys(styleMap).map((key) => ({
+            name: key,
+            value: key,
+          }))
+        )
     ),
 
   async execute(interaction: any) {
     const prompt = interaction.options.get("story")?.value as string;
     const bot = interaction.options.get("bot")?.value as string;
+    let genre = interaction.options.get("genre")?.value as string;
+    if (!genre) {
+      genre = "general";
+    }
     console.log("prompt", prompt);
     console.log("bot", bot);
     if (!prompt || !bot) {
@@ -84,6 +100,7 @@ export const command = {
         prompt,
         boturl: bot,
         options: persona,
+        genre: styleMap[genre],
       },
       retryCount: 0,
     });

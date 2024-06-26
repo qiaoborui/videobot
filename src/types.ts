@@ -97,6 +97,7 @@ export type VideoInputData = z.infer<typeof VideoInputDataSchema>;
 export const userInputSchema = z.object({
   prompt: z.string(),
   boturl: z.string(),
+  genre: z.string().optional(),
   options: z.any().optional(),
   maincharacter: z.string().optional(),
   maincharacterurl: z.string().optional(),
