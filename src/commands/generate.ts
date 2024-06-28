@@ -53,7 +53,7 @@ export const command = {
     const bot = interaction.options.get("bot")?.value as string;
     let genre = interaction.options.get("genre")?.value as string;
     if (!genre) {
-      genre = "general";
+      genre = "General";
     }
     console.log("prompt", prompt);
     console.log("bot", bot);
